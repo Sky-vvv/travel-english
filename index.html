@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>旅行英语口袋本</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Barlow+Condensed:wght@600;700&family=Noto+Sans:wght@400&display=swap">
+<style>
+/* Layout: airport wayfinding — navy ink, signage-yellow markers, one column of phrase cards, bottom tab bar */
+:root{
+  --bg:#eef2f6; --surface:#ffffff; --surface-2:#e3e9f0; --fg:#0f1b2d; --muted:#556274;
+  --line:#d3dbe4; --sign:#ffc72c; --sign-ink:#0f1b2d; --accent:#1f5fae; --ok:#1d7f4e; --ok-bg:#dff3e7;
+  --warn-bg:#fff2c9; --danger:#c0362c;
+  --f-display:"Barlow Condensed","PingFang SC","Noto Sans SC","Microsoft YaHei",sans-serif;
+  --f-en:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-ipa:"Noto Sans","Lucida Sans Unicode","Arial Unicode MS",sans-serif;
+  --f-zh:-apple-system,"PingFang SC","Noto Sans SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0b1320; --surface:#142035; --surface-2:#1c2a42; --fg:#e7edf5; --muted:#9aa8bb;
+  --line:#2a3a54; --sign:#ffc72c; --sign-ink:#0f1b2d; --accent:#7fb2ff; --ok:#5fd394; --ok-bg:#163828;
+  --warn-bg:#3a3215; --danger:#ff7b70; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1320; --surface:#142035; --surface-2:#1c2a42; --fg:#e7edf5; --muted:#9aa8bb;
+  --line:#2a3a54; --sign:#ffc72c; --sign-ink:#0f1b2d; --accent:#7fb2ff; --ok:#5fd394; --ok-bg:#163828;
+  --warn-bg:#3a3215; --danger:#ff7b70; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-zh);font-size:16px;line-height:1.5;-webkit-tap-highlight-color:transparent}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:12px 96px}
+.top{display:flex;align-items:center;gap:12px;padding-block:8px 14px}
+.logo{width:40px;height:40px;border-radius:8px;background:var(--sign);color:var(--sign-ink);display:grid;place-items:center;flex:none}
+.logo svg{width:24px;height:24px}
+h1{font-family:var(--f-display);font-size:26px;line-height:1.1;margin:0;letter-spacing:.02em}
+.sub{color:var(--muted);font-size:13px;margin:2px 0 0}
+h2{font-family:var(--f-display);font-size:22px;margin:0;text-wrap:balance}
+.eyebrow{font-family:var(--f-display);text-transform:uppercase;letter-spacing:.12em;font-size:13px;color:var(--muted);font-weight:600}
+
+.summary{background:var(--fg);color:var(--bg);border-radius:var(--r);padding:16px;display:flex;align-items:center;gap:16px;margin-bottom:14px}
+.summary .big{font-family:var(--f-display);font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+.summary .big small{font-size:20px;opacity:.7}
+.summary p{margin:0;font-size:14px;opacity:.85}
+.bar{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}
+.summary .bar{background:rgba(127,127,127,.35);margin-top:8px}
+.bar i{display:block;height:100%;background:var(--sign);border-radius:3px}
+
+.search{width:100%;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--surface);color:var(--fg);font-size:16px;margin-bottom:14px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px;min-width:0}
+.tile .row{display:flex;align-items:center;gap:10px}
+.ico{width:36px;height:36px;border-radius:8px;background:var(--sign);color:var(--sign-ink);display:grid;place-items:center;flex:none}
+.ico svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.tile b{font-size:17px}
+.tile .en{font-family:var(--f-display);font-size:14px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+.tile .meta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+.back{display:inline-flex;align-items:center;gap:4px;background:none;border:0;padding:6px 0;color:var(--accent);font-size:15px}
+.scene-head{display:flex;align-items:center;gap:12px;margin:6px 0 14px}
+.scene-head .ico{width:48px;height:48px}.scene-head .ico svg{width:28px;height:28px}
+.list{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;min-width:0}
+.card.known{border-color:var(--ok)}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--warn-bg);color:var(--fg);margin-bottom:6px}
+.en-text{font-family:var(--f-en);font-size:20px;font-weight:700;line-height:1.3;margin:0;background:none;border:0;padding:0;text-align:left;display:block;width:100%}
+.ipa{font-family:var(--f-ipa);color:var(--accent);font-size:15px;margin:4px 0 2px;word-break:break-word}
+.zh{font-size:16px;margin:0}
+.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:7px 12px;font-size:14px;min-height:38px}
+.btn svg{width:16px;height:16px;fill:currentColor}
+.btn.play{background:var(--sign);color:var(--sign-ink);border-color:var(--sign);font-weight:700}
+.btn.on{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:700}
+.btn.star.on{background:var(--warn-bg);border-color:var(--sign);color:var(--fg)}
+.btn.wide{flex:1;justify-content:center;border-radius:10px;min-height:48px;font-size:16px}
+.btn.primary{background:var(--accent);color:var(--surface);border-color:var(--accent);font-weight:700}
+.empty{color:var(--muted);text-align:center;padding:24px 8px}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;margin-bottom:12px}
+.panel h3{margin:0 0 10px;font-size:16px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:6px 12px;font-size:14px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.mode{display:flex;flex-direction:column;gap:8px}
+.mode button{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:12px}
+.mode button[aria-pressed="true"]{border:2px solid var(--accent);background:var(--surface)}
+.mode small{display:block;color:var(--muted);font-size:13px}
+.check{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:15px}
+.check input{width:20px;height:20px}
+
+.quiz{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px 16px;min-height:280px;display:flex;flex-direction:column;gap:14px}
+.quiz .count{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums}
+.prompt-zh{font-size:24px;font-weight:700;text-align:center;margin:18px 0 6px}
+.reveal{border-top:1px dashed var(--line);padding-top:14px;text-align:center}
+.reveal .en-text{text-align:center;font-size:22px}
+.listen-btn{align-self:center;width:88px;height:88px;border-radius:50%;background:var(--sign);color:var(--sign-ink);border:0;display:grid;place-items:center;margin:10px 0}
+.listen-btn svg{width:40px;height:40px;fill:currentColor}
+.opts{display:flex;flex-direction:column;gap:8px}
+.opt{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:12px;font-size:16px}
+.opt.right{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);font-weight:700}
+.opt.wrong{border-color:var(--danger);color:var(--danger)}
+.row2{display:flex;gap:10px}
+.result{text-align:center;padding:10px 0}
+.result .big{font-family:var(--f-display);font-size:56px;line-height:1}
+
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;flex-wrap:wrap}
+.set-row select,.set-row input[type=range]{font-size:15px}
+.danger-link{background:none;border:0;color:var(--danger);padding:8px 0;font-size:14px}
+
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px);z-index:5}
+.nav button{flex:1;max-width:200px;background:none;border:0;padding:8px 0 10px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
+.nav svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav button[aria-current="page"]{color:var(--fg);font-weight:700}
+.nav button[aria-current="page"] svg{stroke:var(--accent)}
+
+.show{position:fixed;inset:0;background:var(--sign);color:var(--sign-ink);z-index:20;display:flex;flex-direction:column;justify-content:center;padding:calc(24px + env(safe-area-inset-top,0px)) 24px calc(24px + env(safe-area-inset-bottom,0px));gap:18px;text-align:center}
+.show .huge{font-family:var(--f-en);font-weight:700;font-size:clamp(30px,9vw,56px);line-height:1.2;overflow-wrap:anywhere}
+.show .small{font-size:18px;opacity:.75}
+.show .hint{position:absolute;bottom:calc(16px + env(safe-area-inset-bottom,0px));left:0;right:0;font-size:13px;opacity:.6}
+.toast{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--fg);color:var(--bg);padding:8px 16px;border-radius:999px;font-size:14px;z-index:30;max-width:calc(100% - 32px)}
+@media (prefers-reduced-motion:no-preference){.card,.quiz{transition:border-color .2s}}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app"></div>
+<nav class="nav" id="nav">
+  <button data-tab="learn" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21h15"/></svg>学习</button>
+  <button data-tab="practice"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="14" height="14" rx="2"/><path d="M7 3h12a2 2 0 0 1 2 2v12"/></svg>练习</button>
+  <button data-tab="mine"><svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></svg>收藏与设置</button>
+</nav>
+<div class="show" id="show" hidden role="dialog" aria-label="给对方看"></div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const ICONS={
+ basic:'<path d="M4 5h16v11H10l-5 4v-4H4z"/><path d="M8 10h8"/>',
+ airport:'<path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/>',
+ plane:'<path d="M7 3v9a2 2 0 0 0 2 2h8"/><path d="M9 14v6M17 14v6M6 20h13"/><path d="M11 9h5"/>',
+ border:'<rect x="5" y="3" width="14" height="18" rx="2"/><circle cx="12" cy="10" r="3"/><path d="M9 16h6"/>',
+ transport:'<rect x="4" y="3" width="16" height="14" rx="2"/><path d="M4 10h16M8 21v-4M16 21v-4"/><circle cx="8" cy="13.5" r=".6"/><circle cx="16" cy="13.5" r=".6"/>',
+ hotel:'<path d="M3 19V6M3 14h18v5M21 14a3 3 0 0 0-3-3h-7v3"/><circle cx="7" cy="11" r="1.5"/>',
+ food:'<path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M18 3c-2 0-3 2-3 6h3v12"/>',
+ shop:'<path d="M5 8h14l-1 13H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
+ direction:'<path d="M12 3v18M5 5h12l2 2.5L17 10H5zM19 12H7l-2 2.5L7 17h12z"/>',
+ sight:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7l2-3h4l2 3"/><circle cx="12" cy="13.5" r="3.5"/>',
+ sos:'<circle cx="12" cy="12" r="9"/><path d="M12 7.5v9M7.5 12h9"/>'
+};
+// [english, ipa, chinese, heard?]  heard = 对方常说的话，重点是听懂
+const SCENES=[
+{id:'basic',zh:'基本用语',en:'Basics',p:[
+["Hello!","həˈləʊ","你好！"],
+["Thank you very much.","ˈθæŋk juː ˈveri mʌtʃ","非常感谢。"],
+["Excuse me.","ɪkˈskjuːz miː","打扰一下 / 劳驾。"],
+["Sorry, I don't understand.","ˈsɒri, aɪ dəʊnt ˌʌndəˈstænd","对不起，我听不懂。"],
+["Could you speak more slowly, please?","kʊd juː spiːk mɔː ˈsləʊli, pliːz","请您说慢一点好吗？"],
+["Could you say that again?","kʊd juː seɪ ðæt əˈɡen","能再说一遍吗？"],
+["Can you write it down?","kæn juː raɪt ɪt daʊn","能写下来吗？"],
+["Do you speak Chinese?","duː juː spiːk ˌtʃaɪˈniːz","你会说中文吗？"],
+["I'm from China.","aɪm frɒm ˈtʃaɪnə","我来自中国。"],
+["Yes, please.","jes, pliːz","好的，谢谢。（接受）"],
+["No, thank you.","nəʊ, θæŋk juː","不用了，谢谢。（拒绝）"],
+["You're welcome.","jɔː ˈwelkəm","不客气。",1]
+]},
+{id:'airport',zh:'机场',en:'Airport',p:[
+["Where is the check-in counter?","weər ɪz ðə ˈtʃek ɪn ˈkaʊntə","值机柜台在哪里？"],
+["Here is my passport.","hɪər ɪz maɪ ˈpɑːspɔːt","这是我的护照。"],
+["I'd like a window seat, please.","aɪd laɪk ə ˈwɪndəʊ siːt, pliːz","我想要靠窗的座位。"],
+["An aisle seat, please.","ən aɪl siːt, pliːz","请给我靠过道的座位。"],
+["I have one bag to check in.","aɪ hæv wʌn bæɡ tə tʃek ɪn","我有一件行李要托运。"],
+["Can I take this on the plane?","kæn aɪ teɪk ðɪs ɒn ðə pleɪn","这个能带上飞机吗？"],
+["Which gate is it?","wɪtʃ ɡeɪt ɪz ɪt","是哪个登机口？"],
+["What time do we board?","wɒt taɪm duː wiː bɔːd","几点登机？"],
+["Is the flight delayed?","ɪz ðə flaɪt dɪˈleɪd","航班延误了吗？"],
+["I missed my connecting flight.","aɪ mɪst maɪ kəˈnektɪŋ flaɪt","我错过了转机航班。"],
+["Where is the baggage claim?","weər ɪz ðə ˈbæɡɪdʒ kleɪm","在哪里取行李？"],
+["My luggage is missing.","maɪ ˈlʌɡɪdʒ ɪz ˈmɪsɪŋ","我的行李不见了。"]
+]},
+{id:'plane',zh:'飞机上',en:'On the plane',p:[
+["Excuse me, this is my seat.","ɪkˈskjuːz miː, ðɪs ɪz maɪ siːt","不好意思，这是我的座位。"],
+["Chicken or beef?","ˈtʃɪkɪn ɔː biːf","要鸡肉还是牛肉？",1],
+["Chicken, please.","ˈtʃɪkɪn, pliːz","我要鸡肉，谢谢。"],
+["Could I have some water, please?","kʊd aɪ hæv səm ˈwɔːtə, pliːz","请给我一些水。"],
+["Could I have a blanket?","kʊd aɪ hæv ə ˈblæŋkɪt","能给我一条毯子吗？"],
+["May I put my seat back?","meɪ aɪ pʊt maɪ siːt bæk","我可以把椅背放下吗？"],
+["Can I get past, please?","kæn aɪ ɡet pɑːst, pliːz","请让我过一下。"],
+["Where is the toilet?","weər ɪz ðə ˈtɔɪlət","洗手间在哪里？"],
+["I feel sick.","aɪ fiːl sɪk","我不舒服（想吐）。"],
+["Do I need to fill in this form?","duː aɪ niːd tə fɪl ɪn ðɪs fɔːm","我需要填这张表吗？"],
+["Can I borrow a pen?","kæn aɪ ˈbɒrəʊ ə pen","能借我一支笔吗？"]
+]},
+{id:'border',zh:'入境海关',en:'Immigration',p:[
+["What is the purpose of your visit?","wɒt ɪz ðə ˈpɜːpəs əv jɔː ˈvɪzɪt","你来的目的是什么？",1],
+["I'm here for travel.","aɪm hɪə fə ˈtrævl","我来旅游。"],
+["How long will you stay?","haʊ lɒŋ wɪl juː steɪ","你会待多久？",1],
+["About one week.","əˈbaʊt wʌn wiːk","大约一个星期。"],
+["Where are you staying?","weər ɑː juː ˈsteɪɪŋ","你住在哪里？",1],
+["I'm staying at this hotel.","aɪm ˈsteɪɪŋ ət ðɪs həʊˈtel","我住在这家酒店。（同时出示订单）"],
+["Here is my return ticket.","hɪər ɪz maɪ rɪˈtɜːn ˈtɪkɪt","这是我的回程机票。"],
+["Are you traveling alone?","ɑː juː ˈtrævəlɪŋ əˈləʊn","你是一个人旅行吗？",1],
+["I'm traveling with my family.","aɪm ˈtrævəlɪŋ wɪð maɪ ˈfæməli","我和家人一起旅行。"],
+["Anything to declare?","ˈeniθɪŋ tə dɪˈkleə","有需要申报的东西吗？",1],
+["Nothing to declare.","ˈnʌθɪŋ tə dɪˈkleə","没有要申报的。"]
+]},
+{id:'transport',zh:'交通出行',en:'Transport',p:[
+["Where can I get a taxi?","weə kæn aɪ ɡet ə ˈtæksi","在哪里可以打到出租车？"],
+["Please take me to this address.","pliːz teɪk miː tə ðɪs əˈdres","请带我去这个地址。"],
+["How much to the airport?","haʊ mʌtʃ tə ði ˈeəpɔːt","去机场多少钱？"],
+["Please stop here.","pliːz stɒp hɪə","请在这里停车。"],
+["Where is the subway station?","weər ɪz ðə ˈsʌbweɪ ˈsteɪʃn","地铁站在哪里？"],
+["One ticket to the city center, please.","wʌn ˈtɪkɪt tə ðə ˈsɪti ˈsentə, pliːz","一张去市中心的票。"],
+["Does this bus go to the station?","dʌz ðɪs bʌs ɡəʊ tə ðə ˈsteɪʃn","这辆公交车去车站吗？"],
+["Which line should I take?","wɪtʃ laɪn ʃʊd aɪ teɪk","我应该坐哪条线？"],
+["Where do I change trains?","weə duː aɪ tʃeɪndʒ treɪnz","我在哪里换乘？"],
+["Please tell me when to get off.","pliːz tel miː wen tə ɡet ɒf","到站时请告诉我。"],
+["Where to?","weə tuː","去哪里？",1]
+]},
+{id:'hotel',zh:'酒店住宿',en:'Hotel',p:[
+["I have a reservation.","aɪ hæv ə ˌrezəˈveɪʃn","我有预订。"],
+["My name is Li Ming.","maɪ neɪm ɪz liː mɪŋ","我叫李明。（换成你的名字）"],
+["I'd like to check in.","aɪd laɪk tə tʃek ɪn","我要办理入住。"],
+["Is breakfast included?","ɪz ˈbrekfəst ɪnˈkluːdɪd","含早餐吗？"],
+["What time is checkout?","wɒt taɪm ɪz ˈtʃekaʊt","几点退房？"],
+["What's the Wi-Fi password?","wɒts ðə ˈwaɪfaɪ ˈpɑːswɜːd","无线网密码是多少？"],
+["Can I leave my bags here?","kæn aɪ liːv maɪ bæɡz hɪə","我能把行李寄存在这里吗？"],
+["The air conditioner doesn't work.","ði ˈeə kənˈdɪʃənə ˈdʌznt wɜːk","空调坏了。"],
+["Could I have more towels?","kʊd aɪ hæv mɔː ˈtaʊəlz","能多给我几条毛巾吗？"],
+["I lost my room key.","aɪ lɒst maɪ ruːm kiː","我的房卡丢了。"],
+["Could you call a taxi for me?","kʊd juː kɔːl ə ˈtæksi fə miː","能帮我叫一辆出租车吗？"],
+["I'd like to check out.","aɪd laɪk tə tʃek aʊt","我要退房。"]
+]},
+{id:'food',zh:'餐厅吃饭',en:'Restaurant',p:[
+["A table for two, please.","ə ˈteɪbl fə tuː, pliːz","两位，谢谢。"],
+["Can I see the menu?","kæn aɪ siː ðə ˈmenjuː","能看一下菜单吗？"],
+["What do you recommend?","wɒt duː juː ˌrekəˈmend","你推荐什么？"],
+["I'll have this one.","aɪl hæv ðɪs wʌn","我要这个。（指着菜单）"],
+["Not too spicy, please.","nɒt tuː ˈspaɪsi, pliːz","请不要太辣。"],
+["I'm allergic to peanuts.","aɪm əˈlɜːdʒɪk tə ˈpiːnʌts","我对花生过敏。"],
+["No ice, please.","nəʊ aɪs, pliːz","请不要加冰。"],
+["Can I have some more water?","kæn aɪ hæv səm mɔː ˈwɔːtə","能再给我一些水吗？"],
+["For here or to go?","fə hɪər ɔː tə ɡəʊ","在这里吃还是带走？",1],
+["To go, please.","tə ɡəʊ, pliːz","带走，谢谢。"],
+["The bill, please.","ðə bɪl, pliːz","请结账。"],
+["It was delicious!","ɪt wəz dɪˈlɪʃəs","很好吃！"]
+]},
+{id:'shop',zh:'购物',en:'Shopping',p:[
+["How much is this?","haʊ mʌtʃ ɪz ðɪs","这个多少钱？"],
+["I'm just looking.","aɪm dʒʌst ˈlʊkɪŋ","我只是看看。"],
+["Can I try it on?","kæn aɪ traɪ ɪt ɒn","我可以试穿吗？"],
+["Do you have a bigger size?","duː juː hæv ə ˈbɪɡə saɪz","有大一号的吗？"],
+["Do you have a smaller size?","duː juː hæv ə ˈsmɔːlə saɪz","有小一号的吗？"],
+["Do you have other colors?","duː juː hæv ˈʌðə ˈkʌləz","有别的颜色吗？"],
+["That's too expensive.","ðæts tuː ɪkˈspensɪv","太贵了。"],
+["Can you give me a discount?","kæn juː ɡɪv miː ə ˈdɪskaʊnt","能便宜一点吗？"],
+["I'll take it.","aɪl teɪk ɪt","我买了。"],
+["Can I pay by card?","kæn aɪ peɪ baɪ kɑːd","可以刷卡吗？"],
+["Cash or card?","kæʃ ɔː kɑːd","付现金还是刷卡？",1],
+["Can I get a tax refund?","kæn aɪ ɡet ə tæks ˈriːfʌnd","可以退税吗？"],
+["Could I have a bag?","kʊd aɪ hæv ə bæɡ","能给我一个袋子吗？"]
+]},
+{id:'direction',zh:'问路',en:'Directions',p:[
+["How do I get to this place?","haʊ duː aɪ ɡet tə ðɪs pleɪs","怎么去这个地方？（指着地图）"],
+["Is it far from here?","ɪz ɪt fɑː frəm hɪə","离这里远吗？"],
+["Can I walk there?","kæn aɪ wɔːk ðeə","能走路过去吗？"],
+["Could you show me on the map?","kʊd juː ʃəʊ miː ɒn ðə mæp","能在地图上指给我看吗？"],
+["Where is the nearest supermarket?","weər ɪz ðə ˈnɪərɪst ˈsuːpəmɑːkɪt","最近的超市在哪里？"],
+["Is there a restroom near here?","ɪz ðeər ə ˈrestruːm nɪə hɪə","附近有洗手间吗？"],
+["I'm lost.","aɪm lɒst","我迷路了。"],
+["Go straight.","ɡəʊ streɪt","直走。",1],
+["Turn left.","tɜːn left","左转。",1],
+["Turn right.","tɜːn raɪt","右转。",1],
+["It's on your left.","ɪts ɒn jɔː left","在你左手边。",1],
+["It's around the corner.","ɪts əˈraʊnd ðə ˈkɔːnə","就在拐角那里。",1]
+]},
+{id:'sight',zh:'景点游玩',en:'Sightseeing',p:[
+["Two tickets, please.","tuː ˈtɪkɪts, pliːz","两张票，谢谢。"],
+["How much is the ticket?","haʊ mʌtʃ ɪz ðə ˈtɪkɪt","门票多少钱？"],
+["What time does it open?","wɒt taɪm dʌz ɪt ˈəʊpən","几点开门？"],
+["What time does it close?","wɒt taɪm dʌz ɪt kləʊz","几点关门？"],
+["Can I take photos here?","kæn aɪ teɪk ˈfəʊtəʊz hɪə","这里可以拍照吗？"],
+["Could you take a photo for us?","kʊd juː teɪk ə ˈfəʊtəʊ fər ʌs","能帮我们拍张照吗？"],
+["Is there a discount for children?","ɪz ðeər ə ˈdɪskaʊnt fə ˈtʃɪldrən","儿童有优惠吗？"],
+["Do you have a map in Chinese?","duː juː hæv ə mæp ɪn ˌtʃaɪˈniːz","有中文地图吗？"],
+["Where is the entrance?","weər ɪz ði ˈentrəns","入口在哪里？"],
+["Where is the exit?","weər ɪz ði ˈeksɪt","出口在哪里？"]
+]},
+{id:'sos',zh:'紧急求助',en:'Emergency',p:[
+["Help!","help","救命！"],
+["Please call the police!","pliːz kɔːl ðə pəˈliːs","请报警！"],
+["Please call an ambulance!","pliːz kɔːl ən ˈæmbjələns","请叫救护车！"],
+["I need a doctor.","aɪ niːd ə ˈdɒktə","我需要看医生。"],
+["My wallet was stolen.","maɪ ˈwɒlɪt wəz ˈstəʊlən","我的钱包被偷了。"],
+["I lost my passport.","aɪ lɒst maɪ ˈpɑːspɔːt","我的护照丢了。"],
+["Where is the Chinese embassy?","weər ɪz ðə ˌtʃaɪˈniːz ˈembəsi","中国大使馆在哪里？"],
+["I have a headache.","aɪ hæv ə ˈhedeɪk","我头疼。"],
+["I have a stomachache.","aɪ hæv ə ˈstʌməkeɪk","我肚子疼。"],
+["I have a fever.","aɪ hæv ə ˈfiːvə","我发烧了。"],
+["Where is the pharmacy?","weər ɪz ðə ˈfɑːməsi","药店在哪里？"],
+["Can I use your phone?","kæn aɪ juːz jɔː fəʊn","能借用一下你的电话吗？"]
+]}
+];
+const ALL=[];
+SCENES.forEach(s=>s.p.forEach((r,i)=>ALL.push({id:s.id+'-'+i,scene:s.id,en:r[0],ipa:r[1],zh:r[2],heard:!!r[3]})));
+const BY_ID=Object.fromEntries(ALL.map(x=>[x.id,x]));
+const SCENE_BY_ID=Object.fromEntries(SCENES.map(s=>[s.id,s]));
+
+const KEY='travel-english-v1';
+let S={known:{},star:{},accent:'en-US',rate:0.9};
+try{const raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw));}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const svgIcon=id=>`<svg viewBox="0 0 24 24">${ICONS[id]}</svg>`;
+const PLAY='<svg viewBox="0 0 24 24"><path d="M7 4.5v15l13-7.5z"/></svg>';
+const SPEAKER='<svg viewBox="0 0 24 24"><path d="M3 9v6h4l5 4V5L7 9z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+
+let toastT;
+function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,1800);}
+
+// ---------- speech ----------
+let voices=[];
+function loadVoices(){try{voices=speechSynthesis.getVoices()||[];}catch(e){voices=[];}}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+function pickVoice(){
+  if(!voices.length)loadVoices();
+  const want=S.accent.toLowerCase();
+  const m=voices.filter(v=>v.lang&&v.lang.replace('_','-').toLowerCase()===want);
+  const good=m.find(v=>/samantha|daniel|google|natural|enhanced|premium/i.test(v.name));
+  return good||m[0]||voices.find(v=>/^en/i.test(v.lang))||null;
+}
+function speak(text,slow){
+  if(!('speechSynthesis' in window)){toast('这个浏览器不支持朗读，请换 Safari 或 Chrome');return;}
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=S.accent;const v=pickVoice();if(v)u.voice=v;
+    u.rate=slow?0.6:S.rate;
+    speechSynthesis.speak(u);
+  }catch(e){toast('朗读失败，请检查手机是否静音');}
+}
+
+// ---------- routing ----------
+let tab='learn',view={name:'home'},query='';
+function go(t,v){tab=t;view=v||{name:t==='learn'?'home':t};render();window.scrollTo(0,0);}
+document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{if(b.dataset.tab==='practice'&&view.name==='quiz'){}go(b.dataset.tab);});
+
+function sceneStats(id){const items=ALL.filter(x=>x.scene===id);return{total:items.length,known:items.filter(x=>S.known[x.id]).length};}
+
+function phraseCard(x,showScene){
+  const k=!!S.known[x.id],st=!!S.star[x.id];
+  return `<div class="card${k?' known':''}" data-id="${x.id}">
+    ${x.heard?'<span class="tag">对方常说 · 重点听懂</span>':''}
+    ${showScene?`<div class="eyebrow">${esc(SCENE_BY_ID[x.scene].zh)}</div>`:''}
+    <button class="en-text" data-act="play" aria-label="朗读 ${esc(x.en)}">${esc(x.en)}</button>
+    <div class="ipa">/${esc(x.ipa)}/</div>
+    <p class="zh">${esc(x.zh)}</p>
+    <div class="actions">
+      <button class="btn play" data-act="play">${PLAY}朗读</button>
+      <button class="btn" data-act="slow">慢速</button>
+      ${x.heard?'':'<button class="btn" data-act="show">给对方看</button>'}
+      <button class="btn${k?' on':''}" data-act="known" aria-pressed="${k}">${k?'✓ 已会':'标为已会'}</button>
+      <button class="btn star${st?' on':''}" data-act="star" aria-pressed="${st}" aria-label="收藏">${st?'★':'☆'}</button>
+    </div></div>`;
+}
+
+function renderHome(){
+  const total=ALL.length,known=ALL.filter(x=>S.known[x.id]).length;
+  const q=query.trim().toLowerCase();
+  let body;
+  if(q){
+    const hits=ALL.filter(x=>x.en.toLowerCase().includes(q)||x.zh.includes(q));
+    body=hits.length?`<div class="list">${hits.map(x=>phraseCard(x,true)).join('')}</div>`:`<p class="empty">没有找到“${esc(query)}”，试试别的词，比如“厕所”或“taxi”。</p>`;
+  }else{
+    body=`<div class="grid">${SCENES.map(s=>{const st=sceneStats(s.id);return `<button class="tile" data-scene="${s.id}">
+      <span class="row"><span class="ico">${svgIcon(s.id)}</span><span style="min-width:0"><b>${s.zh}</b><br><span class="en">${s.en}</span></span></span>
+      <span class="bar"><i style="width:${st.known/st.total*100}%"></i></span>
+      <span class="meta">已会 ${st.known} / ${st.total} 句</span></button>`}).join('')}</div>`;
+  }
+  return `<header class="top"><span class="logo">${svgIcon('airport').replace('<svg','<svg fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"')}</span>
+    <div><h1>旅行英语口袋本</h1><p class="sub">按场景学 · 每句都有音标和发音</p></div></header>
+    <section class="summary"><div class="big">${known}<small> / ${total}</small></div>
+      <div style="flex:1;min-width:0"><p>已经会说的句子</p><div class="bar"><i style="width:${known/total*100}%"></i></div></div></section>
+    <input class="search" id="q" type="search" placeholder="搜索：中文或英文，例如 厕所 / taxi" value="${esc(query)}" aria-label="搜索句子">
+    ${body}`;
+}
+
+function renderScene(id){
+  const s=SCENE_BY_ID[id],st=sceneStats(id);
+  const items=ALL.filter(x=>x.scene===id);
+  return `<button class="back" data-back>‹ 全部场景</button>
+    <div class="scene-head"><span class="ico">${svgIcon(id)}</span><div><div class="eyebrow">${s.en}</div><h2>${s.zh}</h2></div>
+    <span style="margin-left:auto" class="sub">已会 ${st.known}/${st.total}</span></div>
+    <div class="list">${items.map(x=>phraseCard(x)).join('')}</div>
+    <div class="actions" style="margin-top:16px"><button class="btn wide primary" data-practice="${id}">练习这个场景</button></div>`;
+}
+
+// ---------- practice ----------
+let P={scope:'all',mode:'say',onlyNew:true};
+let Q=null;
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function pool(){let items=ALL.filter(x=>P.scope==='all'||x.scene===P.scope);if(P.onlyNew){const n=items.filter(x=>!S.known[x.id]);if(n.length)items=n;}return items;}
+
+function renderPracticeSetup(){
+  const n=pool().length;
+  return `<header class="top"><div><h1>练习</h1><p class="sub">每次 10 句，练完自动记住进度</p></div></header>
+  <div class="panel"><h3>练哪个场景</h3><div class="chips">
+    <button class="chip" data-scope="all" aria-pressed="${P.scope==='all'}">全部</button>
+    ${SCENES.map(s=>`<button class="chip" data-scope="${s.id}" aria-pressed="${P.scope===s.id}">${s.zh}</button>`).join('')}
+  </div>
+  <label class="check"><input type="checkbox" id="onlyNew" ${P.onlyNew?'checked':''}>只练还没学会的句子</label></div>
+  <div class="panel"><h3>练习方式</h3><div class="mode">
+    <button data-mode="say" aria-pressed="${P.mode==='say'}"><b>看中文，说英文</b><small>先自己开口说，再看答案、听发音</small></button>
+    <button data-mode="listen" aria-pressed="${P.mode==='listen'}"><b>听英文，选意思</b><small>练耳朵：听懂外国人在说什么</small></button>
+  </div></div>
+  <button class="btn wide primary" id="start" style="width:100%">开始练习（可练 ${n} 句）</button>`;
+}
+
+function startQuiz(){
+  const items=shuffle(pool()).slice(0,10);
+  Q={items,i:0,right:0,revealed:false,picked:null,opts:null,mode:P.mode};
+  view={name:'quiz'};prepQ();render();window.scrollTo(0,0);
+}
+function prepQ(){
+  Q.revealed=false;Q.picked=null;Q.opts=null;
+  const x=Q.items[Q.i];
+  if(Q.mode==='listen'){
+    const same=shuffle(ALL.filter(y=>y.scene===x.scene&&y.id!==x.id&&y.zh!==x.zh));
+    const other=shuffle(ALL.filter(y=>y.scene!==x.scene));
+    const d=same.slice(0,2).concat(other.slice(0,3)).slice(0,3);
+    Q.opts=shuffle([x].concat(d));
+    speak(x.en);
+  }
+}
+function renderQuiz(){
+  const x=Q.items[Q.i];
+  const head=`<button class="back" data-quit>‹ 结束练习</button>`;
+  const count=`<div class="count"><span>${SCENE_BY_ID[x.scene].zh}</span><span>${Q.i+1} / ${Q.items.length}</span></div>`;
+  if(Q.mode==='say'){
+    return `${head}<div class="quiz">${count}
+      <p class="sub" style="text-align:center;margin:0">用英文怎么说？先试着说出来</p>
+      <div class="prompt-zh">${esc(x.zh)}</div>
+      ${Q.revealed?`<div class="reveal"><button class="en-text" data-say="${x.id}">${esc(x.en)}</button><div class="ipa">/${esc(x.ipa)}/</div>
+        <div class="actions" style="justify-content:center"><button class="btn play" data-say="${x.id}">${PLAY}再听一次</button><button class="btn" data-sayslow="${x.id}">慢速</button></div></div>
+        <div class="row2"><button class="btn wide" data-grade="0">还不会</button><button class="btn wide primary" data-grade="1">我说对了</button></div>`
+      :`<button class="btn wide primary" id="reveal" style="margin-top:auto">看答案并听发音</button>`}
+    </div>`;
+  }
+  return `${head}<div class="quiz">${count}
+    <p class="sub" style="text-align:center;margin:0">听一听，这句话是什么意思？</p>
+    <button class="listen-btn" data-say="${x.id}" aria-label="再听一次">${SPEAKER}</button>
+    <div class="actions" style="justify-content:center;margin:0"><button class="btn" data-sayslow="${x.id}">慢速再听</button></div>
+    <div class="opts">${Q.opts.map(o=>{let c='';if(Q.picked){if(o.id===x.id)c=' right';else if(o.id===Q.picked)c=' wrong';}
+      return `<button class="opt${c}" data-pick="${o.id}" ${Q.picked?'disabled':''}>${esc(o.zh)}</button>`}).join('')}</div>
+    ${Q.picked?`<div class="reveal"><div class="en-text">${esc(x.en)}</div><div class="ipa">/${esc(x.ipa)}/</div></div>
+      <button class="btn wide primary" id="next">${Q.i+1<Q.items.length?'下一句':'看结果'}</button>`:''}
+  </div>`;
+}
+function renderResult(){
+  const n=Q.items.length;
+  return `<div class="quiz result"><div class="eyebrow">练习完成</div><div class="big">${Q.right}<small style="font-size:24px"> / ${n}</small></div>
+    <p>${Q.right===n?'全部答对，太棒了！':Q.right>=n*0.6?'不错！不会的句子下次会再出现。':'没关系，多听几遍就熟了。'}</p>
+    <div class="list" style="text-align:left">${Q.items.map(x=>`<div class="card${S.known[x.id]?' known':''}"><button class="en-text" data-say="${x.id}" style="font-size:17px">${esc(x.en)}</button><div class="ipa">/${esc(x.ipa)}/</div><p class="zh">${esc(x.zh)}</p></div>`).join('')}</div>
+    <div class="row2"><button class="btn wide" data-quit>返回</button><button class="btn wide primary" id="again">再练 10 句</button></div></div>`;
+}
+
+// ---------- mine ----------
+let confirmReset=false;
+function renderMine(){
+  const stars=ALL.filter(x=>S.star[x.id]);
+  return `<header class="top"><div><h1>收藏与设置</h1><p class="sub">收藏常用的句子，出门前快速复习</p></div></header>
+  <div class="panel"><h3>发音设置</h3>
+    <div class="set-row"><label for="accent">口音</label><select id="accent">
+      <option value="en-US" ${S.accent==='en-US'?'selected':''}>美式英语</option>
+      <option value="en-GB" ${S.accent==='en-GB'?'selected':''}>英式英语</option></select></div>
+    <div class="set-row"><label for="rate">正常语速：<span id="rateV">${S.rate.toFixed(1)}</span></label><input id="rate" type="range" min="0.5" max="1.2" step="0.1" value="${S.rate}"></div>
+    <button class="btn" id="testVoice">${PLAY}试听</button>
+    <p class="sub" style="margin-top:10px">听不到声音？请关掉手机静音开关，并调大音量。音标采用国内课本常用的英式写法。</p>
+  </div>
+  <div class="panel"><h3>我的收藏（${stars.length}）</h3>
+    ${stars.length?`<div class="list">${stars.map(x=>phraseCard(x,true)).join('')}</div>`:'<p class="sub" style="margin:0">在句子旁点 ☆ 就能收藏到这里。</p>'}
+  </div>
+  <div class="panel"><h3>学习进度</h3><p class="sub" style="margin:0 0 6px">进度保存在这台手机的浏览器里。</p>
+    ${confirmReset?`<p>确定要清空所有“已会”标记和收藏吗？</p><div class="row2"><button class="btn wide" id="resetNo">取消</button><button class="btn wide" id="resetYes" style="color:var(--danger);border-color:var(--danger)">确定清空</button></div>`
+    :'<button class="danger-link" id="reset">清空学习进度</button>'}
+  </div>`;
+}
+
+// ---------- render & events ----------
+function render(){
+  document.querySelectorAll('#nav button').forEach(b=>b.setAttribute('aria-current',b.dataset.tab===tab?'page':'false'));
+  const app=$('#app');
+  if(tab==='learn')app.innerHTML=view.name==='scene'?renderScene(view.id):renderHome();
+  else if(tab==='practice')app.innerHTML=view.name==='quiz'?renderQuiz():view.name==='result'?renderResult():renderPracticeSetup();
+  else app.innerHTML=renderMine();
+  const q=$('#q');if(q){q.oninput=e=>{query=e.target.value;const pos=e.target.selectionStart;render();const n=$('#q');n.focus();try{n.setSelectionRange(pos,pos);}catch(_){}};}
+}
+
+function showToOther(x){
+  const el=$('#show');
+  el.innerHTML=`<div class="small">Excuse me —</div><div class="huge">${esc(x.en)}</div><div class="small">${esc(x.zh)}</div>
+    <div class="actions" style="justify-content:center"><button class="btn" data-say="${x.id}" style="background:var(--sign-ink);color:var(--sign);border-color:var(--sign-ink)">${PLAY}读给对方听</button></div>
+    <div class="hint">点击空白处关闭</div>`;
+  el.hidden=false;
+}
+$('#show').addEventListener('click',e=>{const b=e.target.closest('[data-say]');if(b){speak(BY_ID[b.dataset.say].en);return;}e.currentTarget.hidden=true;});
+
+document.addEventListener('click',e=>{
+  const t=e.target.closest('button,input');if(!t||t.closest('#show'))return;
+  const card=t.closest('.card[data-id]');
+  if(card&&t.dataset.act){
+    const x=BY_ID[card.dataset.id];
+    switch(t.dataset.act){
+      case 'play':speak(x.en);break;
+      case 'slow':speak(x.en,true);break;
+      case 'show':showToOther(x);break;
+      case 'known':if(S.known[x.id])delete S.known[x.id];else{S.known[x.id]=1;toast('已标记为会说');}save();render();break;
+      case 'star':if(S.star[x.id])delete S.star[x.id];else{S.star[x.id]=1;toast('已收藏');}save();render();break;
+    }return;
+  }
+  if(t.dataset.scene){view={name:'scene',id:t.dataset.scene};render();window.scrollTo(0,0);return;}
+  if(t.hasAttribute('data-back')){view={name:'home'};render();return;}
+  if(t.dataset.practice){P.scope=t.dataset.practice;go('practice');return;}
+  if(t.dataset.scope){P.scope=t.dataset.scope;render();return;}
+  if(t.dataset.mode){P.mode=t.dataset.mode;render();return;}
+  if(t.id==='onlyNew'){P.onlyNew=t.checked;render();return;}
+  if(t.id==='start'||t.id==='again'){startQuiz();return;}
+  if(t.hasAttribute('data-quit')){Q=null;view={name:'practice'};render();return;}
+  if(t.dataset.say){speak(BY_ID[t.dataset.say].en);return;}
+  if(t.dataset.sayslow){speak(BY_ID[t.dataset.sayslow].en,true);return;}
+  if(t.id==='reveal'){Q.revealed=true;speak(Q.items[Q.i].en);render();return;}
+  if(t.dataset.grade!==undefined){const x=Q.items[Q.i];if(t.dataset.grade==='1'){Q.right++;S.known[x.id]=1;}else delete S.known[x.id];save();nextQ();return;}
+  if(t.dataset.pick&&!Q.picked){const x=Q.items[Q.i];Q.picked=t.dataset.pick;if(Q.picked===x.id){Q.right++;S.known[x.id]=1;}else{delete S.known[x.id];speak(x.en);}save();render();return;}
+  if(t.id==='next'){nextQ();return;}
+  if(t.id==='testVoice'){speak('Hello! Welcome to London. Enjoy your trip.');return;}
+  if(t.id==='reset'){confirmReset=true;render();return;}
+  if(t.id==='resetNo'){confirmReset=false;render();return;}
+  if(t.id==='resetYes'){S.known={};S.star={};save();confirmReset=false;render();toast('已清空');return;}
+});
+function nextQ(){if(Q.i+1<Q.items.length){Q.i++;prepQ();render();}else{view={name:'result'};render();}window.scrollTo(0,0);}
+document.addEventListener('change',e=>{
+  if(e.target.id==='accent'){S.accent=e.target.value;save();speak('Hello! Nice to meet you.');}
+});
+document.addEventListener('input',e=>{
+  if(e.target.id==='rate'){S.rate=parseFloat(e.target.value);$('#rateV').textContent=S.rate.toFixed(1);save();}
+});
+render();
+</script>
+</body>
+</html>
