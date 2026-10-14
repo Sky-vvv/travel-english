@@ -52,7 +52,12 @@ header h1{font-size:20px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .wcard.playing{border-color:var(--hd)}
 .hidecn .cn,.hidecn .zh{visibility:hidden}
 .sent{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:9px;box-shadow:var(--shadow);width:100%;text-align:left;border:2px solid transparent}
-.sent .sp{font-size:20px;flex:none}
+.sent .sp{font-size:18px;flex:none;width:36px;height:36px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-weight:700}
+.sent .tx{flex:1;min-width:0}
+.wd{cursor:pointer;border-radius:6px;padding:0 1px}
+.wd.hl,.cz.hl{background:#ffe066;color:#3b2f2f;box-shadow:0 0 0 2px #ffe066}
+.cz{border-radius:4px}
+.cz.hl{font-weight:700}
 .sent .en{font-size:18px;font-weight:600;line-height:1.4}
 .sent .zh{color:var(--soft);font-size:14px;margin-top:3px}
 .sent.playing{border-color:var(--hd);background:#fffbea}
@@ -105,6 +110,7 @@ input[type=range]{flex:1;max-width:180px;accent-color:#ff8a5b}
 <main class="wrap" id="app"></main>
 <div class="toast" id="toast"></div>
 <script src="data.js"></script>
+<script src="align.js"></script>
 <script>
 // ---------- state ----------
 const KEY='kidsEnglish.v1';
@@ -114,7 +120,14 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const W=x=>{const[a,b,c]=x.split('|');return{en:a,cn:b,em:c};};
-const P=x=>{const[a,b]=x.split('|');return{en:a,cn:b};};
+const P=x=>{const[a,b,c]=x.split('|');return{en:a,cn:b,map:c||''};};
+// 句子：英文每个词可点，点了以后英文和对应的中文一起变色
+function sentHTML(s,key,label){
+  const r=alignSentence(s.en,s.cn,s.map);
+  const en=r.enParts.map(p=>p.w?`<span class="wd" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
+  const cn=r.cnParts.map(p=>p.g>=0?`<span class="cz" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
+  return `<div class="sent"><button class="sp" ${key} aria-label="朗读整句">${label}</button><div class="tx"><div class="en">${en}</div><div class="zh">${cn}</div></div></div>`;
+}
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800);}
 const starStr=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
 const unitStars=(b,i)=>S.stars[b+'-'+i]||0;
@@ -238,13 +251,13 @@ function renderUnit(b,i,sub){
   }else if(unitTab==='s'){
     const ss=u.s.map(P);
     html+=`<div class="bar"><button class="btn" data-playall="s">▶️ 全部读一遍</button><button class="btn ghost" data-hidecn>${hideCn?'👀 显示中文':'🙈 遮住中文'}</button></div>`+
-    ss.map((s,k)=>`<button class="sent" data-sent="${k}"><span class="sp">🔊</span><span><div class="en">${esc(s.en)}</div><div class="zh">${esc(s.cn)}</div></span></button>`).join('');
+    ss.map((s,k)=>sentHTML(s,`data-sent="${k}"`,'🔊')).join('')+`<div class="note">👆 点句子里的任意一个英文单词，它和对应的中文会一起变黄色；点 🔊 听整句。</div>`;
   }else if(unitTab==='p'){
     const ps=u.p.s.map(P);
     html+=`<h3 class="ptitle">${esc(u.p.t)}</h3><p class="psub">${esc(u.p.c)}</p>
     <div class="bar"><button class="btn" data-playall="p">▶️ 读整篇</button><button class="btn ghost" data-stop>⏹ 停</button><button class="btn ghost" data-hidecn>${hideCn?'👀 显示中文':'🙈 遮住中文'}</button></div>`+
-    ps.map((s,k)=>`<button class="sent" data-psent="${k}"><span class="sp">${k+1}</span><span><div class="en">${esc(s.en)}</div><div class="zh">${esc(s.cn)}</div></span></button>`).join('')+
-    `<div class="note">📌 这篇短文是按本单元的单词和句型编写的练习短文，帮助孩子复习，不是课本原文。点任意一句可以单独听。</div>`;
+    ps.map((s,k)=>sentHTML(s,`data-psent="${k}"`,k+1)).join('')+
+    `<div class="note">📌 这篇短文是按本单元的单词和句型编写的练习短文，帮助孩子复习，不是课本原文。点句子前面的数字可以单独听这一句；点某个英文单词，它和对应的中文会一起变黄色。</div>`;
   }else{
     html+=`<div class="modes">
       <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
@@ -321,6 +334,16 @@ function renderDone(){
 
 // ---------- events ----------
 document.addEventListener('click',e=>{
+  const wd=e.target.closest('.wd');
+  if(wd){
+    const row=wd.closest('.sent');const g=wd.dataset.g;
+    row.parentNode.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
+    let words=[wd];
+    if(g!=='-1'){words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];row.querySelectorAll(`.cz[data-g="${g}"]`).forEach(x=>x.classList.add('hl'));}
+    words.forEach(x=>x.classList.add('hl'));
+    speak(words.map(x=>x.textContent).join(' '));
+    return;
+  }
   const t=e.target.closest('button,[data-slow]');if(!t)return;
   const d=t.dataset;
   if(d.slow!==undefined){e.stopPropagation();speak(d.slow,true);return;}
