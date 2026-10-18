@@ -263,7 +263,7 @@ function renderUnit(b,i,sub){
       <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
       <button class="mode" data-mode="cn"><span class="em">🀄</span><span><b>看中文选英文</b><span>看中文意思，选出英语单词</span></span></button>
       <button class="mode" data-mode="spell"><span class="em">🔤</span><span><b>拼单词</b><span>点字母，拼出听到的单词</span></span></button>
-    </div><div class="note">每个游戏 10 道题。答对 10 题得 ⭐⭐⭐，答对 7 题以上得 ⭐⭐，答对 4 题以上得 ⭐。</div>`;
+    </div><div class="note">每个游戏 10 道题。答错了要在这一题改对，才能进入下一题。一次就答对 10 题得 ⭐⭐⭐，7 题以上得 ⭐⭐，4 题以上得 ⭐。</div>`;
   }
   $('#app').innerHTML=html+'</div>';
   game={b,i,u};game.mode=null;
@@ -279,7 +279,7 @@ function startGame(mode){
   let extra=shuffle(b.units.flatMap((x,k)=>k===i?[]:x.w.map(W))).filter(w=>mode!=='spell'||(/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=9));
   let qs=shuffle(pool).slice(0,10);
   while(qs.length<10&&extra.length)qs.push(extra.shift());
-  game={...game,mode,qs,k:0,score:0,all:u.w.map(W).concat(b.units.flatMap(x=>x.w.map(W)))};
+  game={...game,mode,qs,k:0,score:0,missed:false,all:u.w.map(W).concat(b.units.flatMap(x=>x.w.map(W)))};
   go(`/b/${b.id}/${i}/play`);
 }
 function renderGame(){
@@ -309,14 +309,23 @@ function renderGame(){
   g.locked=false;
   if(g.mode!=='cn')setTimeout(()=>speak(q.en),250);
 }
+// 答错不跳题：留在这一题，直到答对才进入下一题。只有第一次就答对才算分。
 function answer(ok,el){
-  const g=game;if(g.locked)return;g.locked=true;
+  const g=game;if(g.locked)return;
   const q=g.qs[g.k];
-  if(ok){g.score++;beep(true);}else{beep(false);}
-  if(el)el.classList.add(ok?'right':'wrong');
-  if(!ok&&g.opts){const r=g.opts.indexOf(q);const re=document.querySelector(`[data-opt="${r}"]`);if(re)re.classList.add('right');}
-  setTimeout(()=>speak(q.en),200);
-  setTimeout(()=>{g.k++;renderGame();},ok?1100:1900);
+  if(ok){
+    g.locked=true;
+    if(!g.missed)g.score++;
+    beep(true);
+    if(el)el.classList.add('right');
+    setTimeout(()=>speak(q.en),200);
+    setTimeout(()=>{g.k++;g.missed=false;renderGame();},1100);
+    return;
+  }
+  g.missed=true;beep(false);
+  if(el){el.classList.add('wrong');el.disabled=true;}
+  toast('不对哦，再想想！');
+  if(g.mode==='listen')setTimeout(()=>speak(q.en),500);
 }
 function renderDone(){
   const g=game,n=g.score;
@@ -326,7 +335,7 @@ function renderDone(){
   if(better){S.stars[key]=st;save();}
   header(`U${g.i+1} ${esc(g.u.t)}`,`/b/${g.b.id}/${g.i}`,`<span class="pill">${starStr(unitStars(g.b.id,g.i))}</span>`,g.b.color);
   const msg=st===3?'太棒了！全对！':st===2?'真厉害！':st===1?'不错哦，再加油！':'别灰心，再试一次！';
-  $('#app').innerHTML=`<div class="done"><div class="big">${st===3?'🏆':st>=1?'🎉':'💪'}</div><h2>${msg}</h2><div class="stars">${starStr(st)}</div><p>答对了 ${n} / ${g.qs.length} 题${better?'，获得新星星！':''}</p>
+  $('#app').innerHTML=`<div class="done"><div class="big">${st===3?'🏆':st>=1?'🎉':'💪'}</div><h2>${msg}</h2><div class="stars">${starStr(st)}</div><p>一次就答对 ${n} / ${g.qs.length} 题${better?'，获得新星星！':''}</p>
   <div class="bar" style="justify-content:center"><button class="btn" data-mode="${g.mode}">🔁 再玩一次</button><button class="btn ghost" data-go="/b/${g.b.id}/${g.i}">返回单元</button></div></div>`;
   if(st>=2){confetti();speak(st===3?'Excellent!':'Great job!');}
   game={b:g.b,i:g.i,u:g.u,mode:null};
@@ -373,9 +382,22 @@ document.addEventListener('click',e=>{
     const target=g.qs[g.k].en.toLowerCase();
     if(g.ans.length===target.length){
       const ok=g.ans===target;
-      if(!ok){slots.forEach((s,k)=>{s.textContent=target[k];});}
-      document.querySelector('.slots').style.color=ok?'var(--ok)':'var(--bad)';
+      const box=document.querySelector('.slots');
+      box.style.color=ok?'var(--ok)':'var(--bad)';
       answer(ok,null);
+      if(!ok){
+        // 拼错：提示正确拼法，清空后重新拼
+        g.locked=true;
+        const hint=document.querySelector('.qbox .hint');
+        hint.innerHTML=`${esc(g.qs[g.k].cn)}<br>正确拼法是 <b style="color:var(--ok);font-size:20px">${esc(g.qs[g.k].en)}</b>，再拼一次吧`;
+        speak(g.qs[g.k].en,true);
+        setTimeout(()=>{
+          g.ans='';box.style.color='';
+          slots.forEach(s=>{s.textContent='';s.classList.remove('f');});
+          document.querySelectorAll('.letter.used').forEach(b=>b.classList.remove('used'));
+          g.locked=false;
+        },1400);
+      }
     }
     return;
   }
