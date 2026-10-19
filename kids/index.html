@@ -263,7 +263,7 @@ function renderUnit(b,i,sub){
       <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
       <button class="mode" data-mode="cn"><span class="em">🀄</span><span><b>看中文选英文</b><span>看中文意思，选出英语单词</span></span></button>
       <button class="mode" data-mode="spell"><span class="em">🔤</span><span><b>拼单词</b><span>点字母，拼出听到的单词</span></span></button>
-    </div><div class="note">每个游戏 10 道题。答错了要在这一题改对，才能进入下一题。一次就答对 10 题得 ⭐⭐⭐，7 题以上得 ⭐⭐，4 题以上得 ⭐。</div>`;
+    </div><div class="note">每个游戏 10 道题。答错了要在这一题改对，才能进入下一题。拼单词错 3 次会给答案，看完要再默写对一次才过关。一次就答对 10 题得 ⭐⭐⭐，7 题以上得 ⭐⭐，4 题以上得 ⭐。</div>`;
   }
   $('#app').innerHTML=html+'</div>';
   game={b,i,u};game.mode=null;
@@ -288,11 +288,10 @@ function renderGame(){
   const q=g.qs[g.k];
   let html=`<div class="qtop"><button class="btn ghost" data-quit>✕</button><div class="prog"><i style="width:${g.k/g.qs.length*100}%"></i></div><b>${g.k+1}/${g.qs.length}</b></div>`;
   if(g.mode==='spell'){
-    const letters=shuffle(q.en.toLowerCase().split(''));
-    g.ans='';g.letters=letters;
-    html+=`<div class="qbox"><div class="em">${q.em}</div><div class="hint">${esc(q.cn)}</div><button class="btn" data-hear style="margin-top:10px">🔊 再听一次</button></div>
+    g.ans='';g.wrongs=0;g.dictation=false;
+    html+=`<div class="qbox"><div class="em">${q.em}</div><div class="hint">${esc(q.cn)}</div><div id="reveal"></div><button class="btn" data-hear style="margin-top:10px">🔊 再听一次</button></div>
     <div class="slots">${q.en.split('').map(()=>`<span class="slot"></span>`).join('')}</div>
-    <div class="letters">${letters.map((l,k)=>`<button class="letter" data-l="${k}">${l}</button>`).join('')}</div>
+    <div class="letters" id="letters"></div>
     <div class="bar" style="justify-content:center;margin-top:14px"><button class="btn ghost" data-undo>⌫ 退一格</button></div>`;
   }else{
     const opts=shuffle([q].concat(shuffle(g.all.filter(w=>w.en!==q.en&&w.cn!==q.cn)).filter((w,k,a)=>a.findIndex(x=>x.en===w.en)===k).slice(0,3)));
@@ -307,6 +306,7 @@ function renderGame(){
   }
   $('#app').innerHTML=html;
   g.locked=false;
+  if(g.mode==='spell')resetSpell();
   if(g.mode!=='cn')setTimeout(()=>speak(q.en),250);
 }
 // 答错不跳题：留在这一题，直到答对才进入下一题。只有第一次就答对才算分。
@@ -327,6 +327,16 @@ function answer(ok,el){
   toast('不对哦，再想想！');
   if(g.mode==='listen')setTimeout(()=>speak(q.en),500);
 }
+// 拼单词：清空格子，重新打乱字母
+function resetSpell(){
+  const g=game,q=g.qs[g.k];
+  g.ans='';g.letters=shuffle(q.en.toLowerCase().split(''));
+  document.querySelectorAll('.slot').forEach(s=>{s.textContent='';s.classList.remove('f');});
+  const box=document.querySelector('.slots');if(box)box.style.color='';
+  $('#letters').innerHTML=g.letters.map((l,k)=>`<button class="letter" data-l="${k}">${l}</button>`).join('');
+  g.locked=false;
+}
+function spellHint(html){const q=game.qs[game.k];document.querySelector('.qbox .hint').innerHTML=`${esc(q.cn)}${html?'<br>'+html:''}`;}
 function renderDone(){
   const g=game,n=g.score;
   const st=n>=10?3:n>=7?2:n>=4?1:0;
@@ -386,19 +396,26 @@ document.addEventListener('click',e=>{
       box.style.color=ok?'var(--ok)':'var(--bad)';
       answer(ok,null);
       if(!ok){
-        // 拼错：提示正确拼法，清空后重新拼
-        g.locked=true;
-        const hint=document.querySelector('.qbox .hint');
-        hint.innerHTML=`${esc(g.qs[g.k].cn)}<br>正确拼法是 <b style="color:var(--ok);font-size:20px">${esc(g.qs[g.k].en)}</b>，再拼一次吧`;
-        speak(g.qs[g.k].en,true);
-        setTimeout(()=>{
-          g.ans='';box.style.color='';
-          slots.forEach(s=>{s.textContent='';s.classList.remove('f');});
-          document.querySelectorAll('.letter.used').forEach(b=>b.classList.remove('used'));
-          g.locked=false;
-        },1400);
+        // 拼错：前两次只让重拼；错满 3 次才给答案，看完要遮住答案再默写一遍
+        g.locked=true;g.wrongs++;
+        const q=g.qs[g.k];
+        if(g.wrongs<3){
+          spellHint(`<span style="color:var(--bad)">不对哦，再拼一次！还有 ${3-g.wrongs} 次机会，错 3 次会给答案</span>`);
+          setTimeout(resetSpell,900);
+        }else{
+          spellHint('');
+          $('#reveal').innerHTML=`<div style="margin-top:6px">正确拼法是 <b style="color:var(--ok);font-size:26px;letter-spacing:2px">${esc(q.en)}</b></div><div class="hint">记住了吗？接下来要遮住答案，自己默写出来</div><button class="btn" data-dict style="margin-top:8px;background:var(--ok)">✍️ 记住了，开始默写</button>`;
+          speak(q.en,true);
+        }
       }
     }
+    return;
+  }
+  if(d.dict!==undefined){
+    const g=game;g.wrongs=0;g.dictation=true;
+    $('#reveal').innerHTML='';
+    spellHint('<b style="color:var(--hd)">✍️ 默写：不看答案，自己拼出来，拼对才过关</b>');
+    resetSpell();speak(g.qs[g.k].en);
     return;
   }
   if(d.undo!==undefined){
