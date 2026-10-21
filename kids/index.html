@@ -263,7 +263,7 @@ function renderUnit(b,i,sub){
       <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
       <button class="mode" data-mode="cn"><span class="em">🀄</span><span><b>看中文选英文</b><span>看中文意思，选出英语单词</span></span></button>
       <button class="mode" data-mode="spell"><span class="em">🔤</span><span><b>拼单词</b><span>点字母，拼出听到的单词</span></span></button>
-    </div><div class="note">每个游戏 10 道题。答错了要在这一题改对，才能进入下一题。拼单词错了会给答案，先照着拼对一遍，再遮住答案默写对才过关。一次就答对 10 题得 ⭐⭐⭐，7 题以上得 ⭐⭐，4 题以上得 ⭐。</div>`;
+    </div><div class="note">每个游戏 10 道题。答错了要在这一题改对，才能进入下一题。拼单词不会可以点「不会，看答案」，拼错了也会给答案，先照着拼对一遍，再遮住答案默写对才过关。一次就答对 10 题得 ⭐⭐⭐，7 题以上得 ⭐⭐，4 题以上得 ⭐。</div>`;
   }
   $('#app').innerHTML=html+'</div>';
   game={b,i,u};game.mode=null;
@@ -289,10 +289,10 @@ function renderGame(){
   let html=`<div class="qtop"><button class="btn ghost" data-quit>✕</button><div class="prog"><i style="width:${g.k/g.qs.length*100}%"></i></div><b>${g.k+1}/${g.qs.length}</b></div>`;
   if(g.mode==='spell'){
     g.ans='';g.phase='';
-    html+=`<div class="qbox"><div class="em">${q.em}</div><div class="hint">${esc(q.cn)}</div><div id="reveal"></div><button class="btn" data-hear style="margin-top:10px">🔊 再听一次</button></div>
+    html+=`<div class="qbox"><div class="em">${q.em}</div><div class="q">${esc(q.cn)}</div><div class="hint"></div><div id="reveal"></div><button class="btn" data-hear style="margin-top:10px">🔊 再听一次</button></div>
     <div class="slots">${q.en.split('').map(()=>`<span class="slot"></span>`).join('')}</div>
     <div class="letters" id="letters"></div>
-    <div class="bar" style="justify-content:center;margin-top:14px"><button class="btn ghost" data-undo>⌫ 退一格</button></div>`;
+    <div class="bar" style="justify-content:center;margin-top:14px"><button class="btn ghost" data-undo>⌫ 退一格</button><button class="btn ghost" data-showans id="showans">💡 不会，看答案</button></div>`;
   }else{
     const opts=shuffle([q].concat(shuffle(g.all.filter(w=>w.en!==q.en&&w.cn!==q.cn)).filter((w,k,a)=>a.findIndex(x=>x.en===w.en)===k).slice(0,3)));
     g.opts=opts;
@@ -336,7 +336,16 @@ function resetSpell(){
   $('#letters').innerHTML=g.letters.map((l,k)=>`<button class="letter" data-l="${k}">${l}</button>`).join('');
   g.locked=false;
 }
-function spellHint(html){const q=game.qs[game.k];document.querySelector('.qbox .hint').innerHTML=`${esc(q.cn)}${html?'<br>'+html:''}`;}
+function spellHint(html){document.querySelector('.qbox .hint').innerHTML=html||'';}
+// 显示答案，让孩子先照着拼一遍（拼错或点“不会，看答案”时）
+function showCopy(msg){
+  const g=game,q=g.qs[g.k];
+  g.missed=true;g.phase='copy';
+  const b=$('#showans');if(b)b.style.display='none';
+  spellHint(`<span style="color:var(--bad)">${msg}</span>`);
+  $('#reveal').innerHTML=`<div style="margin-top:6px">正确拼法是 <b style="color:var(--ok);font-size:26px;letter-spacing:2px">${esc(q.en)}</b></div>`;
+  resetSpell();speak(q.en,true);
+}
 function renderDone(){
   const g=game,n=g.score;
   const st=n>=10?3:n>=7?2:n>=4?1:0;
@@ -400,7 +409,7 @@ document.addEventListener('click',e=>{
         g.locked=true;g.phase='dict';beep(true);
         setTimeout(()=>{
           $('#reveal').innerHTML='';
-          spellHint('<b style="color:var(--hd)">✍️ 默写：答案遮住了，自己拼出来，拼对才过关</b>');
+          spellHint(`<b style="color:var(--hd)">✍️ 默写「${esc(q.cn)}」：答案遮住了，自己拼出来，拼对才过关</b>`);
           resetSpell();speak(q.en);
         },900);
       }else if(ok){
@@ -408,13 +417,14 @@ document.addEventListener('click',e=>{
       }else{
         answer(false,null);
         g.locked=true;g.phase='copy';
-        setTimeout(()=>{
-          spellHint('<span style="color:var(--bad)">拼错了，先照着下面的答案拼一遍</span>');
-          $('#reveal').innerHTML=`<div style="margin-top:6px">正确拼法是 <b style="color:var(--ok);font-size:26px;letter-spacing:2px">${esc(q.en)}</b></div>`;
-          resetSpell();speak(q.en,true);
-        },900);
+        setTimeout(()=>showCopy('拼错了，先照着下面的答案拼一遍'),900);
       }
     }
+    return;
+  }
+  if(d.showans!==undefined){
+    const g=game;if(g.locked||g.phase)return;
+    showCopy('先照着下面的答案拼一遍，然后再默写');
     return;
   }
   if(d.undo!==undefined){
