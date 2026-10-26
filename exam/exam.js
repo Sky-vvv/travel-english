@@ -197,7 +197,7 @@ function tS(s,o={}){
   const gl=glossFor(s.en);let gp=0;
   const cnOf=p=>{if(gl){const k=p.t.toLowerCase();for(let j=gp;j<gl.length;j++)if(gl[j][0]===k){gp=j+1;return gl[j][1]==='-'?'-':gl[j][1];}}return wordCn(p.t,r.cnParts,p.g,s.en);};
   const en=r.enParts.map(p=>{if(!p.w)return esc(p.t);const c=cnOf(p);return `<span class="wd${c==='-'?' wx':''}" data-g="${p.g}" data-cn="${c==='-'?'（不用翻）':esc(c)}">${esc(p.t)}</span>`;}).join('');
-  return `<span class="tsx" ${o.ns?'data-ns="1"':''}>${o.ns||o.nosp?'':`<button class="tsp no-print" data-tsay="${esc(s.en)}" aria-label="读整句">🔊</button>`}<span class="ten">${en}</span></span>`;
+  return `<span class="tsx" ${o.ns?'data-ns="1"':''}>${o.ns||o.nosp?'':`<button class="tsp no-print" data-tsay="${esc(s.en)}" aria-label="读整句">🔊</button>`}<span class="ten">${en}</span>${o.cnAlways&&s.cn?`<span class="tcn">${esc(s.cn)}</span>`:''}</span>`;
 }
 function optHTML(o){
   if(o.kind==='pic')return `<span class="tem">${o.em}</span>`;
