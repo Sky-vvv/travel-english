@@ -186,11 +186,11 @@ function renderTest(b,i){
   const u=b.units[i];
   const best=S.tests&&S.tests[b.id+'-'+i];
   const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
-  const nocn=S.testNoCn;
-  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button><button class="btn ghost" data-tcn>${nocn?'👀 显示中文':'🙈 遮住中文'}</button></div>
+  const showcn=S.testShowCn;
+  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button><button class="btn ghost" data-tcn>${showcn?'🙈 收起中文':'👀 显示全部中文'}</button></div>
   <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
   <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
-  <div class="paper ${nocn?'tnocn':''}">
+  <div class="paper ${showcn?'tshowcn':''}">
   <div class="phead"><div class="pt">${b.grade}${b.term} · 第${CN_NUM[i]}单元测试卷（第 ${set} 套）</div>
   <div class="ps">Unit ${i+1} ${esc(u.t)} · ${u.c} · 满分 ${total} 分</div>
   <div class="pinfo">姓名 ________　　班级 ________　　得分 ________</div></div>`;
@@ -277,7 +277,7 @@ document.addEventListener('click',e=>{
     if(filled<n&&!confirm(`还有 ${n-filled} 题没有做，确定要交卷吗？`))return;
     submitTest();return;
   }
-  if(d.tcn!==undefined){S.testNoCn=!S.testNoCn;save();document.querySelector('.paper').classList.toggle('tnocn',S.testNoCn);t.textContent=S.testNoCn?'👀 显示中文':'🙈 遮住中文';return;}
+  if(d.tcn!==undefined){S.testShowCn=!S.testShowCn;save();document.querySelector('.paper').classList.toggle('tshowcn',S.testShowCn);if(!S.testShowCn)document.querySelectorAll('.tsx.open').forEach(x=>x.classList.remove('open'));t.textContent=S.testShowCn?'🙈 收起中文':'👀 显示全部中文';return;}
   if(d.tredo!==undefined){render();return;}
   if(d.tnew!==undefined){S.testSet=S.testSet||{};const k=TEST.b.id+'-'+TEST.i;S.testSet[k]=(S.testSet[k]||1)+1;save();render();return;}
   if(d.tprint!==undefined){
