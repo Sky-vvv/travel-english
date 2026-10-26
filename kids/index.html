@@ -346,6 +346,18 @@ function showCopy(msg){
   $('#reveal').innerHTML=`<div style="margin-top:6px">正确拼法是 <b style="color:var(--ok);font-size:26px;letter-spacing:2px">${esc(q.en)}</b></div>`;
   resetSpell();speak(q.en,true);
 }
+// 拼对之后：再看一遍这个英文单词，选出它的中文意思，选对才进入下一题
+function showMeaning(){
+  const g=game,q=g.qs[g.k];g.phase='mean';
+  const opts=shuffle([q].concat(shuffle(g.all.filter(w=>w.en!==q.en&&w.cn!==q.cn)).filter((w,k,a)=>a.findIndex(x=>x.cn===w.cn)===k).slice(0,3)));
+  g.mopts=opts;
+  const box=document.querySelector('.qbox');
+  box.innerHTML=`<div class="hint" style="font-size:18px;color:var(--hd);font-weight:700">拼对啦！它是什么意思？</div><div class="q" style="font-size:44px;letter-spacing:2px;margin:6px 0">${esc(q.en)}</div><button class="btn" data-hear>🔊 再听一次</button>`;
+  document.querySelector('.slots').remove();$('#letters').remove();
+  const bar=document.querySelector('#showans');if(bar)bar.parentNode.remove();
+  box.insertAdjacentHTML('afterend',`<div class="opts">${opts.map((o,k)=>`<button class="opt" data-mopt="${k}">${esc(o.cn)}</button>`).join('')}</div>`);
+  g.locked=false;
+}
 function renderDone(){
   const g=game,n=g.score;
   const st=n>=10?3:n>=7?2:n>=4?1:0;
@@ -393,6 +405,9 @@ document.addEventListener('click',e=>{
   if(d.mode){startGame(d.mode);return;}
   if(d.quit!==undefined){stopSpeak();go(`/b/${game.b.id}/${game.i}`);return;}
   if(d.hear!==undefined){speak(game.qs[game.k].en,true);return;}
+  if(d.mopt!==undefined){const g=game;if(g.locked)return;const ok=g.mopts[+d.mopt]===g.qs[g.k];
+    if(!ok){g.missed=true;beep(false);t.classList.add('wrong');t.disabled=true;toast('不对哦，再想想！');speak(g.qs[g.k].en);return;}
+    answer(true,t);return;}
   if(d.opt!==undefined){const g=game;answer(g.opts[+d.opt]===g.qs[g.k],t);return;}
   if(d.l!==undefined){
     const g=game;if(g.locked)return;
@@ -413,7 +428,8 @@ document.addEventListener('click',e=>{
           resetSpell();speak(q.en);
         },900);
       }else if(ok){
-        answer(true,null);
+        g.locked=true;beep(true);setTimeout(()=>speak(q.en),200);
+        setTimeout(showMeaning,1000);
       }else{
         answer(false,null);
         g.locked=true;g.phase='copy';
