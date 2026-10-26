@@ -180,7 +180,7 @@ function wordCn(t,parts,g,sen){
   const ing=k.endsWith('ing')&&(VOC[k.slice(0,-3)]||VOC[k.slice(0,-3)+'e']||VOC[k.slice(0,-4)]);if(ing)return ing;
   // 词组里的词（police officer、watch TV）：用整个词组的中文
   const ph=Object.keys(VOC).find(x=>x.includes(' ')&&hasWord(x,k)&&hasWord(sen||'',x));
-  return ph?VOC[ph]+'（'+ph+'）':'';
+  return ph?VOC[ph]:'';
 }
 function tS(s,o={}){
   const r=alignSentence(s.en,s.cn||'',s.map||'');
