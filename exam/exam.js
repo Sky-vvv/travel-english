@@ -165,12 +165,27 @@ function makeTest(b,i,set){
 
 // ---------- 渲染 ----------
 // 一句英文：点 🔊 读整句，点单词读单词，下面对应的中文变色
+// 句子不给整句中文：点哪个词，就只显示那个词的中文
+const FW={i:'我',you:'你',he:'他',she:'她',it:'它',we:'我们',they:'他们',me:'我',him:'他',us:'我们',them:'他们',my:'我的',your:'你的',his:'他的',her:'她的',its:'它的',our:'我们的',their:'他们的',
+a:'一（个）',an:'一（个）',the:'这／那',is:'是',am:'是',are:'是',was:'是（过去）',were:'是（过去）',be:'是',to:'到；去',too:'也',and:'和',or:'或者',but:'但是',at:'在',in:'在……里',on:'在……上',under:'在……下面',of:'……的',from:'来自',
+this:'这个',that:'那个',these:'这些',those:'那些',what:'什么',where:'哪里',when:'什么时候',how:'怎样',who:'谁',why:'为什么',which:'哪个',yes:'是的',no:'不',not:'不',with:'和……一起',for:'为了；给',can:'能',do:'做',does:'做',did:'做（过去）',
+"don't":'不',"doesn't":'不',"can't":'不能',"it's":'它是',"i'm":'我是',"what's":'……是什么',"let's":'让我们',"that's":'那是',"he's":'他是',"she's":'她是',"you're":'你是',"they're":'他们是',"we're":'我们是',"isn't":'不是',"aren't":'不是',"i'd":'我想',"i'll":'我将',"we'll":'我们将',"name's":'名字是',
+very:'非常',so:'如此；所以',now:'现在',then:'然后',ask:'问',says:'说',say:'说',see:'看见',like:'喜欢',have:'有',has:'有',go:'去',come:'来',let:'让',please:'请',here:'这里',there:'那里',some:'一些',all:'所有',about:'关于',up:'向上',
+sarah:'萨拉（人名）',mike:'迈克（人名）',john:'约翰（人名）',amy:'埃米（人名）',chen:'陈',jie:'洁',wu:'吴',binbin:'斌斌',zhang:'张',peng:'鹏',oliver:'奥利弗（人名）',zhou:'周',yang:'杨',ming:'明',mr:'先生',by:'乘坐；通过',many:'许多',going:'去',take:'拿；带；乘坐',next:'下一个；旁边',had:'有；吃（过去）',rode:'骑（过去）',saw:'看见（过去）',took:'拿；带（过去）',fell:'摔倒（过去）',bought:'买（过去）',watched:'看（过去）',make:'做',look:'看',get:'得到',put:'放',give:'给',play:'玩；踢',playing:'玩',day:'天',each:'每个',other:'其他的',over:'在……上方；结束',off:'离开',down:'向下',away:'离开',years:'年',words:'单词',word:'单词',turn:'转弯',try:'试',set:'摆放',people:'人们',week:'星期',evening:'晚上',long:'长的',slow:'慢的',right:'右边；对的',left:'左边',deep:'深的',line:'线；排队',room:'房间',bed:'床',mrs:'太太',miss:'小姐',ms:'女士'};
+function wordCn(t,parts,g,sen){
+  if(g>=0){const c=parts.filter(p=>p.g===g).map(p=>p.t).join('…').replace(/^[，。！？、“”：；\s]+|[，。！？、“”：；\s]+$/g,'');if(c)return c;}
+  const k=t.toLowerCase().replace(/’/g,"'");
+  const v=VOC[k]||FW[k]||(k.endsWith("'s")&&(VOC[k.slice(0,-2)]||FW[k.slice(0,-2)]))||(k.endsWith('es')&&VOC[k.slice(0,-2)])||(k.endsWith('s')&&VOC[k.slice(0,-1)]);
+  if(v)return v;
+  const ing=k.endsWith('ing')&&(VOC[k.slice(0,-3)]||VOC[k.slice(0,-3)+'e']||VOC[k.slice(0,-4)]);if(ing)return ing;
+  // 词组里的词（police officer、watch TV）：用整个词组的中文
+  const ph=Object.keys(VOC).find(x=>x.includes(' ')&&hasWord(x,k)&&hasWord(sen||'',x));
+  return ph?VOC[ph]+'（'+ph+'）':'';
+}
 function tS(s,o={}){
   const r=alignSentence(s.en,s.cn||'',s.map||'');
-  const en=r.enParts.map(p=>p.w?`<span class="wd" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
-  const cn=r.cnParts.map(p=>p.g>=0?`<span class="cz" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
-  const showCn=s.cn&&!o.nocn;
-  return `<span class="tsx" ${o.ns?'data-ns="1"':''}>${o.ns||o.nosp?'':`<button class="tsp no-print" data-tsay="${esc(s.en)}" aria-label="读整句">🔊</button>`}<span class="ten">${en}</span>${showCn?`<span class="${o.cnAlways?'tcn':'tzh'}">${cn}</span>`:''}</span>`;
+  const en=r.enParts.map(p=>p.w?`<span class="wd" data-g="${p.g}" data-cn="${esc(wordCn(p.t,r.cnParts,p.g,s.en))}">${esc(p.t)}</span>`:esc(p.t)).join('');
+  return `<span class="tsx" ${o.ns?'data-ns="1"':''}>${o.ns||o.nosp?'':`<button class="tsp no-print" data-tsay="${esc(s.en)}" aria-label="读整句">🔊</button>`}<span class="ten">${en}</span></span>`;
 }
 function optHTML(o){
   if(o.kind==='pic')return `<span class="tem">${o.em}</span>`;
@@ -187,7 +202,7 @@ function renderTest(b,i){
   const best=S.tests&&S.tests[b.id+'-'+i];
   const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
   const showcn=S.testShowCn;
-  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button><button class="btn ghost" data-tcn>${showcn?'🙈 收起中文':'👀 显示全部中文'}</button></div>
+  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
   <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
   <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
   <div class="paper ${showcn?'tshowcn':''}">
@@ -263,7 +278,7 @@ document.addEventListener('click',e=>{
   if(!TEST)return;
   const sp=e.target.closest('[data-tsay]');if(sp){speak(sp.dataset.tsay);return;}
   const op=e.target.closest('[data-topt]');
-  if(op&&!e.target.closest('.wd')){
+  if(op){
     if(TEST.done)return;const d=op.dataset;
     TEST.ans[d.topt]=d.v;
     op.parentNode.querySelectorAll('.topt').forEach(x=>x.classList.toggle('on',x===op));

@@ -67,8 +67,7 @@ header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .tsx{display:inline}
 .ten{font-weight:600}
 .tzh,.tcn{display:block;color:var(--soft);font-size:14px;font-weight:400}
-.tzh{visibility:hidden}
-.tshowcn .tzh,.tsx.open .tzh{visibility:visible}
+.tip{position:absolute;z-index:50;background:#2d3142;color:#ffe066;font-size:17px;font-weight:700;padding:6px 12px;border-radius:10px;pointer-events:none;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:80vw}
 .tsp{font-size:16px;padding:0 4px;vertical-align:baseline}
 .tsp.big{font-size:22px;background:var(--bg);border-radius:50%;width:38px;height:38px}
 .wd{cursor:pointer;border-radius:5px;padding:0 1px}
@@ -124,7 +123,7 @@ function speak(text){
   try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text.replace(/[“”"]/g,'').replace(/_+/g,' blank '));u.lang='en-US';const v=pickVoice();if(v)u.voice=v;u.rate=S.rate;speechSynthesis.speak(u);}catch(e){toast('朗读失败，请检查手机是否静音');}
 }
 </script>
-<script src="exam.js"></script>
+<script src="exam.js?v=3"></script>
 <script>
 // ---------- 页面 ----------
 function header(title,back){$('#hdw').innerHTML=(back?`<button class="back" data-go="${back}" aria-label="返回">‹</button>`:'')+`<h1>${title}</h1>`;}
@@ -155,19 +154,30 @@ function render(){
   <div class="note">每套卷 100 分，有听力和笔试：听音选图、听音选词、听音选句、补全单词、选出不同类、单项选择、情景交际、阅读判断。<br>做题时点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。<br>打印的试卷最后一页有听力原文和答案，听力部分请家长照着读。</div>
   <div class="foot">题目按人教版课本每个单元的单词和句型编写，不是课本或练习册的原题。<br>学单词、玩游戏请到：<a href="../kids/">小学英语乐园</a></div>`;
 }
-// 点单词：读这个词，并把它和对应的中文一起变黄
+// 点单词：读这个词，单词变黄，旁边冒出它的中文
+let tipEl=null;
+function hideTip(){if(tipEl){tipEl.remove();tipEl=null;}}
+function showTip(wd,cn){
+  hideTip();if(!cn)return;
+  tipEl=document.createElement('div');tipEl.className='tip no-print';tipEl.textContent=cn;document.body.appendChild(tipEl);
+  const r=wd.getBoundingClientRect(),w=tipEl.offsetWidth;
+  let x=r.left+r.width/2-w/2+scrollX;x=Math.max(8,Math.min(x,scrollX+document.documentElement.clientWidth-w-8));
+  tipEl.style.left=x+'px';tipEl.style.top=(r.bottom+scrollY+6)+'px';
+}
+window.addEventListener('resize',hideTip);
 document.addEventListener('click',e=>{
   const wd=e.target.closest('.wd');
   if(wd){
     const row=wd.closest('.tsx');const g=wd.dataset.g;
     document.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
-    row.classList.add('open');
     let words=[wd];
-    if(g!=='-1'){words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];row.querySelectorAll(`.cz[data-g="${g}"]`).forEach(x=>x.classList.add('hl'));}
+    if(g!=='-1')words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];
     words.forEach(x=>x.classList.add('hl'));
+    showTip(wd,wd.dataset.cn);
     if(!row.dataset.ns)speak(words.map(x=>x.textContent).join(' '));
     return;
   }
+  hideTip();document.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
   const t=e.target.closest('[data-go]');if(t){go(t.dataset.go);}
 });
 render();
