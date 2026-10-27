@@ -114,13 +114,9 @@ input[type=range]{flex:1;max-width:180px;accent-color:#ff8a5b}
 <script>
 // ---------- state ----------
 const KEY='kidsEnglish.v1';
-let S={stars:{},accent:'en-US',rate:0.85,wrong:{}};
+let S={stars:{},accent:'en-US',rate:0.85};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
-// 错题本：游戏里答错、拼错或点了「看答案」的单词都记下来
-S.wrong=S.wrong||{};
-function addWrong(w){const k=w.en.toLowerCase();const o=S.wrong[k]||{w:[w.en,w.cn,w.em].join('|'),n:0};o.n++;o.t=Date.now();S.wrong[k]=o;save();}
-function wrongList(){return Object.values(S.wrong).sort((a,b)=>b.t-a.t).map(o=>W(o.w));}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const W=x=>{const[a,b,c]=x.split('|');return{en:a,cn:b,em:c};};
@@ -201,10 +197,6 @@ function render(){
   stopSpeak();
   const parts=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   window.scrollTo(0,0);
-  if(parts[0]==='wrong'){
-    if(parts[1]==='play'&&game&&game.review&&game.qs){header('📒 错题本','/wrong','',"#ef6f6c");return renderGame();}
-    return renderWrong();
-  }
   if(parts[0]==='b'){
     const b=BOOKS.find(x=>x.id===parts[1]);
     if(!b)return go('/');
@@ -220,7 +212,6 @@ function renderHome(){
   header('🐣 小学英语乐园','',`<span class="pill">⭐ ${total}</span>`);
   $('#app').innerHTML=`
   <div class="hero"><div class="big">🐣</div><h2>一起学英语吧！</h2><p>点单词听发音 · 读短文 · 玩游戏拿星星</p></div>
-  <button class="unit" data-go="/wrong" style="margin-bottom:14px"><span class="no" style="background:#ef6f6c">📒</span><span class="tt"><b>错题本</b><span>${Object.keys(S.wrong).length?`有 ${Object.keys(S.wrong).length} 个单词要再练`:'还没有错题'}</span></span><span class="stars">›</span></button>
   <div class="grid">${BOOKS.map(b=>`
     <button class="book" style="background:${b.color}" data-go="/b/${b.id}">
       <span class="st">⭐ ${bookStars(b)}/${b.units.length*3}</span>
@@ -281,7 +272,6 @@ function renderUnit(b,i,sub){
 // ---------- games ----------
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
 function startGame(mode){
-  if(game&&game.review)return startReview(mode);
   const {b,i,u}=game;
   let pool=u.w.map(W);
   if(mode==='spell'){pool=pool.filter(w=>/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=9);}
@@ -291,29 +281,6 @@ function startGame(mode){
   while(qs.length<10&&extra.length)qs.push(extra.shift());
   game={...game,mode,qs,k:0,score:0,missed:false,all:u.w.map(W).concat(b.units.flatMap(x=>x.w.map(W)))};
   go(`/b/${b.id}/${i}/play`);
-}
-function startReview(mode){
-  let pool=wrongList();
-  if(mode==='spell')pool=pool.filter(w=>/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=9);
-  if(!pool.length){toast(mode==='spell'?'错题本里没有能拼的单词，换个游戏吧':'错题本是空的，真棒！');return;}
-  const all=pool.concat(BOOKS.flatMap(b=>b.units.flatMap(x=>x.w.map(W))));
-  game={review:true,u:{t:'错题本',w:[]},mode,qs:shuffle(pool).slice(0,10),k:0,score:0,missed:false,all};
-  go('/wrong/play');
-}
-function renderWrong(){
-  header('📒 错题本','/','',"#ef6f6c");
-  const ws=wrongList();
-  game={review:true,u:{t:'错题本',w:[]},mode:null};
-  if(!ws.length){$('#app').innerHTML=`<div class="done"><div class="big">🎉</div><h2>错题本是空的！</h2><p>玩游戏时答错的单词会自动收到这里，方便再练。</p><div class="bar" style="justify-content:center"><button class="btn" data-go="/">返回首页</button></div></div>`;return;}
-  $('#app').innerHTML=`<div class="sec">一共 ${ws.length} 个单词要再练。练习时一次就答对，这个词就从错题本移走。</div>
-  <div class="modes">
-    <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
-    <button class="mode" data-mode="cn"><span class="em">🀄</span><span><b>看中文选英文</b><span>看中文意思，选出英语单词</span></span></button>
-    <button class="mode" data-mode="spell"><span class="em">🔤</span><span><b>拼单词</b><span>拼对后还要选出中文意思</span></span></button>
-  </div>
-  <div class="sec" style="margin-top:14px">要再练的单词</div>
-  <div class="words">${ws.map(w=>`<div class="wcard" data-say="${esc(w.en)}"><span class="slow" data-wdel="${esc(w.en.toLowerCase())}" title="我会了">✓</span><div class="em">${w.em}</div><div class="en">${esc(w.en)}</div><div class="cn">${esc(w.cn)}</div><div class="cn" style="color:var(--bad);font-size:12px">错了 ${S.wrong[w.en.toLowerCase()].n} 次</div></div>`).join('')}</div>
-  <div class="note">👆 点卡片听发音。已经会了，可以点卡片右上角的 ✓ 把它移出错题本。</div>`;
 }
 function renderGame(){
   const g=game;
@@ -342,21 +309,20 @@ function renderGame(){
   if(g.mode==='spell')resetSpell();
   if(g.mode!=='cn')setTimeout(()=>speak(q.en),250);
 }
-function markMiss(){const g=game;if(!g.missed){g.missed=true;addWrong(g.qs[g.k]);}}
 // 答错不跳题：留在这一题，直到答对才进入下一题。只有第一次就答对才算分。
 function answer(ok,el){
   const g=game;if(g.locked)return;
   const q=g.qs[g.k];
   if(ok){
     g.locked=true;
-    if(!g.missed){g.score++;if(g.review){delete S.wrong[q.en.toLowerCase()];save();}}
+    if(!g.missed)g.score++;
     beep(true);
     if(el)el.classList.add('right');
     setTimeout(()=>speak(q.en),200);
     setTimeout(()=>{g.k++;g.missed=false;renderGame();},1100);
     return;
   }
-  markMiss();beep(false);
+  g.missed=true;beep(false);
   if(el){el.classList.add('wrong');el.disabled=true;}
   toast('不对哦，再想想！');
   if(g.mode==='listen')setTimeout(()=>speak(q.en),500);
@@ -374,7 +340,7 @@ function spellHint(html){document.querySelector('.qbox .hint').innerHTML=html||'
 // 显示答案，让孩子先照着拼一遍（拼错或点“不会，看答案”时）
 function showCopy(msg){
   const g=game,q=g.qs[g.k];
-  markMiss();g.phase='copy';
+  g.missed=true;g.phase='copy';
   const b=$('#showans');if(b)b.style.display='none';
   spellHint(`<span style="color:var(--bad)">${msg}</span>`);
   $('#reveal').innerHTML=`<div style="margin-top:6px">正确拼法是 <b style="color:var(--ok);font-size:26px;letter-spacing:2px">${esc(q.en)}</b></div>`;
@@ -394,13 +360,6 @@ function showMeaning(){
 }
 function renderDone(){
   const g=game,n=g.score;
-  if(g.review){
-    const left=Object.keys(S.wrong).length;
-    $('#app').innerHTML=`<div class="done"><div class="big">${left?'💪':'🏆'}</div><h2>${left?'练完一轮啦！':'错题全部消灭！'}</h2><p>这一轮一次就答对 ${n} / ${g.qs.length} 个，已移出错题本。${left?`还剩 ${left} 个。`:''}</p>
-    <div class="bar" style="justify-content:center">${left?`<button class="btn" data-mode="${g.mode}">🔁 再练一轮</button>`:''}<button class="btn ghost" data-go="/wrong">返回错题本</button></div></div>`;
-    if(!left){confetti();speak('Excellent!');}
-    game={review:true,u:g.u,mode:null};return;
-  }
   const st=n>=10?3:n>=7?2:n>=4?1:0;
   const key=g.b.id+'-'+g.i;
   const better=st>(S.stars[key]||0);
@@ -425,9 +384,8 @@ document.addEventListener('click',e=>{
     speak(words.map(x=>x.textContent).join(' '));
     return;
   }
-  const t=e.target.closest('button,[data-slow],[data-wdel],[data-say]');if(!t)return;
+  const t=e.target.closest('button,[data-slow]');if(!t)return;
   const d=t.dataset;
-  if(d.wdel!==undefined){e.stopPropagation();delete S.wrong[d.wdel];save();toast('好的，已移出错题本');renderWrong();return;}
   if(d.slow!==undefined){e.stopPropagation();speak(d.slow,true);return;}
   if(d.go!==undefined){if(d.go===location.hash.replace(/^#/,''))render();else go(d.go);return;}
   if(d.acc){S.accent=d.acc;save();renderHome();speak('Hello!');return;}
@@ -445,10 +403,10 @@ document.addEventListener('click',e=>{
     playList(list,d.playall==='p'?[null].concat(els):els);return;
   }
   if(d.mode){startGame(d.mode);return;}
-  if(d.quit!==undefined){stopSpeak();go(game.review?'/wrong':`/b/${game.b.id}/${game.i}`);return;}
+  if(d.quit!==undefined){stopSpeak();go(`/b/${game.b.id}/${game.i}`);return;}
   if(d.hear!==undefined){speak(game.qs[game.k].en,true);return;}
   if(d.mopt!==undefined){const g=game;if(g.locked)return;const ok=g.mopts[+d.mopt]===g.qs[g.k];
-    if(!ok){markMiss();beep(false);t.classList.add('wrong');t.disabled=true;toast('不对哦，再想想！');speak(g.qs[g.k].en);return;}
+    if(!ok){g.missed=true;beep(false);t.classList.add('wrong');t.disabled=true;toast('不对哦，再想想！');speak(g.qs[g.k].en);return;}
     answer(true,t);return;}
   if(d.opt!==undefined){const g=game;answer(g.opts[+d.opt]===g.qs[g.k],t);return;}
   if(d.l!==undefined){
