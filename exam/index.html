@@ -77,6 +77,7 @@ header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .cz.hl{font-weight:700}
 .done{text-align:center;padding:20px 0}.done .big{font-size:60px}.done h2{font-size:34px;margin:6px 0}
 .pkey{display:none}
+.tfrom{font-size:12px;color:var(--soft);margin-bottom:2px}
 @media print{
   @page{size:A4;margin:12mm}
   body{background:#fff;padding:0;font-size:12pt}
@@ -127,7 +128,7 @@ function speak(text){
 }
 </script>
 <script src="gloss.js?v=5"></script>
-<script src="exam.js?v=6"></script>
+<script src="exam.js?v=7"></script>
 <script>
 // ---------- 页面 ----------
 function header(title,back){$('#hdw').innerHTML=(back?`<button class="back" data-go="${back}" aria-label="返回">‹</button>`:'')+`<h1>${title}</h1>`;}
@@ -139,6 +140,7 @@ function render(){
   TEST=null;window.scrollTo(0,0);
   const p=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   const b=p[0]==='b'&&BOOKS.find(x=>x.id===p[1]);
+  if(p[0]==='wrong'){header('📒 错题本','/');$('#app').innerHTML=renderReview();return;}
   if(b&&p[2]!=null&&b.units[+p[2]]){
     const i=+p[2];
     header(`第${CN_NUM[i]}单元 · ${esc(b.units[i].t)}`,`/b/${b.id}`);
@@ -154,8 +156,9 @@ function render(){
   }
   header('📝 小学英语单元测试卷','');
   $('#app').innerHTML=`<div class="hero"><div class="big">📝</div><h2>单元测试卷</h2><p>手机上直接做题 · 也能打印成 A4 试卷</p></div>
+  <button class="unit" data-go="/wrong" style="margin-bottom:14px"><span class="no" style="background:#ef6f6c">📒</span><span class="tt"><b>错题本</b><span>${wrongCount()?`有 ${wrongCount()} 道错题要再练`:'还没有错题，交卷后做错的题会收到这里'}</span></span><span class="score">›</span></button>
   <div class="grid">${BOOKS.map(b=>`<button class="book" style="background:${b.color}" data-go="/b/${b.id}"><span class="ic">${b.icon}</span><b>${b.grade}${b.term}</b><small>${b.ed}</small><small>${b.units.length} 套单元卷</small></button>`).join('')}</div>
-  <div class="note">每套卷 100 分，有听力和笔试：听音选图、听音选词、听音选句、补全单词、选出不同类、单项选择、情景交际、阅读判断。<br>做题时点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。<br>打印的试卷最后一页有听力原文和答案，听力部分请家长照着读。</div>
+  <div class="note">每套卷 100 分，有听力和笔试：听音选图、听音选词、听音选句、补全单词、选出不同类、单项选择、情景交际、阅读判断。<br>做题时点 🔊 读整句，点英文单词读单词，单词下面会显示它的中文。交卷后做错的题会收进「错题本」。<br>打印的试卷最后一页有听力原文和答案，听力部分请家长照着读。</div>
   <div class="foot">题目按人教版课本每个单元的单词和句型编写，不是课本或练习册的原题。<br>学单词、玩游戏请到：<a href="../kids/">小学英语乐园</a></div>`;
 }
 // 点单词：读这个词，单词变黄，旁边冒出它的中文

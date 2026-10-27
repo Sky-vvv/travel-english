@@ -206,24 +206,9 @@ function optHTML(o){
 function qHTML(q){if(!q)return'';if(q.h)return q.h;return tS(q.s,{cnAlways:q.cnAlways});}
 let TEST=null;
 function testSet(b,i){return (S.testSet&&S.testSet[b.id+'-'+i])||1;}
-function renderTest(b,i){
-  const set=testSet(b,i);
-  const secs=makeTest(b,i,set);
-  TEST={b,i,set,secs,done:false,ans:{}};
-  const u=b.units[i];
-  const best=S.tests&&S.tests[b.id+'-'+i];
-  const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
-  const showcn=S.testShowCn;
-  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
-  <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
-  <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
-  <div class="paper ${showcn?'tshowcn':''}">
-  <div class="phead"><div class="pt">${b.grade}${b.term} · 第${CN_NUM[i]}单元测试卷（第 ${set} 套）</div>
-  <div class="ps">Unit ${i+1} ${esc(u.t)} · ${u.c} · 满分 ${total} 分</div>
-  <div class="pinfo">姓名 ________　　班级 ________　　得分 ________</div></div>`;
-  const sec=(k,s)=>{
-    let h=`<div class="tsec"><h4>${CN_NUM[k]}、${s.title}<small>（共 ${s.items.length} 小题，每小题 ${s.pts} 分，共 ${s.items.length*s.pts} 分）</small></h4>`;
-    if(s.listen)h+=`<div class="tlh no-print">点 🔊 听录音。打印的试卷请家长照着最后一页的“听力原文”读给孩子听。</div>`;
+function secHTML(k,s){
+    let h=`<div class="tsec">${s.from?`<div class="tfrom">${esc(s.from)}</div>`:''}<h4>${s.from?'':CN_NUM[k]+'、'}${s.title}${s.from?'':`<small>（共 ${s.items.length} 小题，每小题 ${s.pts} 分，共 ${s.items.length*s.pts} 分）</small>`}</h4>`;
+    if(s.listen&&!s.from)h+=`<div class="tlh no-print">点 🔊 听录音。打印的试卷请家长照着最后一页的“听力原文”读给孩子听。</div>`;
     if(s.passage)h+=`<div class="tpass"><div class="tpt">${esc(s.passage.t)}</div>${s.passage.s.map(x=>`<div class="tpl">${tS(P(x))}</div>`).join('')}</div>`;
     s.items.forEach((it,j)=>{
       const id=k+'-'+j;
@@ -240,9 +225,24 @@ function renderTest(b,i){
       h+=`<div class="tfb" id="fb-${id}"></div></div>`;
     });
     return h+'</div>';
-  };
+}
+function renderTest(b,i){
+  const set=testSet(b,i);
+  const secs=makeTest(b,i,set);
+  TEST={b,i,set,secs,done:false,ans:{}};
+  const u=b.units[i];
+  const best=S.tests&&S.tests[b.id+'-'+i];
+  const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
+  const showcn=S.testShowCn;
+  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
+  <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
+  <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
+  <div class="paper ${showcn?'tshowcn':''}">
+  <div class="phead"><div class="pt">${b.grade}${b.term} · 第${CN_NUM[i]}单元测试卷（第 ${set} 套）</div>
+  <div class="ps">Unit ${i+1} ${esc(u.t)} · ${u.c} · 满分 ${total} 分</div>
+  <div class="pinfo">姓名 ________　　班级 ________　　得分 ________</div></div>`;
   html+=`<div class="tpart">第一部分　听力（共 ${secs.slice(0,3).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;
-  secs.forEach((s,k)=>{if(k===3)html+=`<div class="tpart">第二部分　笔试（共 ${secs.slice(3).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;html+=sec(k,s);});
+  secs.forEach((s,k)=>{if(k===3)html+=`<div class="tpart">第二部分　笔试（共 ${secs.slice(3).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;html+=secHTML(k,s);});
   html+=`</div>
   <div class="bar no-print" style="justify-content:center;margin-top:16px"><button class="btn" data-tsubmit>✅ 交卷</button></div>
   <div id="tresult" class="no-print"></div>
@@ -258,6 +258,37 @@ function keyHTML(secs,b,i,set){
   secs.forEach((s,k)=>{h+=`<p><b>${CN_NUM[k]}、</b>${s.items.map((it,j)=>`${j+1}. ${esc(letterOf(it))}`).join('　')}</p>`;});
   return h;
 }
+// ---------- 错题本：交卷后做错（或没做）的题收进来，可以单独再做；再做对了就移出 ----------
+function noteWrong(T,s,k,j,it,ok){
+  S.wrongQ=S.wrongQ||{};
+  const key=T.review?s.keys[j]:`${T.b.id}-${T.i}-${T.set}-${k}-${j}`;
+  if(ok){delete S.wrongQ[key];return;}
+  const o=S.wrongQ[key]||{b:T.b.id,i:T.i,title:s.title,listen:!!s.listen,tf:!!s.passage,item:it,n:0};
+  o.n++;o.t=Date.now();S.wrongQ[key]=o;
+}
+function wrongCount(){return Object.keys(S.wrongQ||{}).length;}
+function renderReview(){
+  const W=Object.entries(S.wrongQ||{}).sort((a,b)=>a[1].b.localeCompare(b[1].b)||a[1].i-b[1].i||a[1].t-b[1].t);
+  if(!W.length){TEST=null;return `<div class="done"><div class="big">🎉</div><h2>错题本是空的！</h2><p>做测试卷交卷后，做错的题会自动收到这里。</p><div class="bar" style="justify-content:center"><button class="btn" data-go="/">返回首页</button></div></div>`;}
+  // 同一单元、同一大题的错题放在一起（阅读判断只放一次短文）
+  const secs=[];
+  for(const [key,o] of W){const g=o.b+'-'+o.i+'-'+o.title;let s=secs.find(x=>x.g===g);
+    if(!s){const b=BOOKS.find(x=>x.id===o.b);const u=b.units[o.i];s={g,keys:[],title:o.title,pts:2,listen:o.listen,passage:o.tf?u.p:null,items:[],from:`${b.grade}${b.term} · 第${CN_NUM[o.i]}单元`};secs.push(s);}
+    s.keys.push(key);s.items.push(o.item);}
+  TEST={review:true,secs,done:false,ans:{}};
+  return `<div class="note no-print">一共 <b>${W.length}</b> 道错题。做完点「交卷」，做对的题会移出错题本，做错的继续留着。</div>
+  <div class="paper">${secs.map((s,k)=>secHTML(k,s)).join('')}</div>
+  <div class="bar no-print" style="justify-content:center;margin-top:16px"><button class="btn" data-tsubmit>✅ 交卷</button></div>
+  <div id="tresult" class="no-print"></div>`;
+}
+function reviewDone(right,wrong){
+  const left=wrongCount();
+  $('#tresult').innerHTML=`<div class="done"><div class="big">${left?'💪':'🏆'}</div><h2>做对 ${right} 题</h2><p>${right?'做对的题已经移出错题本。':''}${left?`还剩 ${left} 道错题，下面写着正确答案，看懂了再练一次。`:'错题全部消灭了！'}</p>
+  <div class="bar" style="justify-content:center">${left?'<button class="btn" data-tredo>🔁 再练一次</button>':''}<button class="btn ghost" data-go="/">返回首页</button></div></div>`;
+  document.querySelector('[data-tsubmit]').style.display='none';
+  $('#tresult').scrollIntoView({behavior:'smooth',block:'center'});
+  if(!left){confetti();speak('Great job!');}
+}
 function submitTest(){
   const T=TEST;if(!T||T.done)return;
   let score=0,wrong=0,blank=0;
@@ -270,12 +301,14 @@ function submitTest(){
     if(got===undefined||got==='')blank++;
     if(ok)score+=s.pts;else wrong++;
     el.classList.add(ok?'tok':'tbad');
+    noteWrong(T,s,k,j,it,ok);
     if(!ok){
       fb.innerHTML=`正确答案：<b>${esc(letterOf(it))}</b>${it.type==='choice'?`（${esc(optText(it.opts[it.ans]))}）`:''}${it.why?`<br>${esc(it.why)}`:''}`;
       const c=el.querySelector(`[data-v="${it.type==='tf'?(it.ans?'T':'F'):it.ans}"]`);if(c)c.classList.add('tright');
     }
   }));
-  T.done=true;
+  T.done=true;save();
+  if(T.review)return reviewDone(score/2,wrong);
   const total=T.secs.reduce((s,x)=>s+x.pts*x.items.length,0);
   const key=T.b.id+'-'+T.i;S.tests=S.tests||{};const better=S.tests[key]==null||score>S.tests[key];if(better){S.tests[key]=score;save();}
   const pct=score/total*100;
