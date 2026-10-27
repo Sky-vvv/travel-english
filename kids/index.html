@@ -51,9 +51,9 @@ header h1{font-size:20px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .wcard .slow{position:absolute;right:6px;top:6px;font-size:18px;opacity:.75;padding:4px}
 .wcard.playing{border-color:var(--hd)}
 .hidecn .cn{visibility:hidden}
-.sent .zh{display:none}.sent.open .zh{display:block}
-.zbtn{margin-top:4px;font-size:13px;padding:3px 10px;border-radius:12px;background:#fff3e6;color:#e8590c;border:1px solid #ffd8b5;font-weight:600}
-.sent.open .zbtn{display:none}
+.wd.open{display:inline-flex;flex-direction:column;align-items:center;vertical-align:top;line-height:1.25}
+.wd.open::after{content:attr(data-cn);font-size:13px;font-weight:700;color:#e8590c;white-space:nowrap;line-height:1.2}
+.wd.wx.open::after{color:#aab;font-weight:400;font-size:11px}
 .sent{display:flex;gap:10px;align-items:flex-start;background:#fff;border-radius:16px;padding:12px 14px;margin-bottom:9px;box-shadow:var(--shadow);width:100%;text-align:left;border:2px solid transparent}
 .sent .sp{font-size:18px;flex:none;width:36px;height:36px;border-radius:50%;background:var(--bg);display:grid;place-items:center;font-weight:700}
 .sent .tx{flex:1;min-width:0}
@@ -114,6 +114,7 @@ input[type=range]{flex:1;max-width:180px;accent-color:#ff8a5b}
 <div class="toast" id="toast"></div>
 <script src="data.js"></script>
 <script src="align.js"></script>
+<script src="../exam/gloss.js?v=1"></script>
 <script>
 // ---------- state ----------
 const KEY='kidsEnglish.v1';
@@ -124,12 +125,19 @@ const $=s=>document.querySelector(s);
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const W=x=>{const[a,b,c]=x.split('|');return{en:a,cn:b,em:c};};
 const P=x=>{const[a,b,c]=x.split('|');return{en:a,cn:b,map:c||''};};
+const GTOK=/[A-Za-z0-9]+(?:['’.\-][A-Za-z0-9]+)*/g;
+const GLM=new Map((typeof GLOSS!=='undefined'?GLOSS:[]).map(l=>{const[en,g]=l.split('|');const w=en.match(GTOK)||[],m=g.trim().split(/\s+/);return[en,w.map((x,i)=>[x.toLowerCase(),m[i]])];}));
+const VOCK={};for(const b of BOOKS)for(const u of b.units)for(const x of u.w){const[a,c]=x.split('|');const k=a.toLowerCase();if(!VOCK[k])VOCK[k]=c.split('；')[0];}
 // 句子：英文每个词可点，点了以后英文和对应的中文一起变色
 function sentHTML(s,key,label){
   const r=alignSentence(s.en,s.cn,s.map);
-  const en=r.enParts.map(p=>p.w?`<span class="wd" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
-  const cn=r.cnParts.map(p=>p.g>=0?`<span class="cz" data-g="${p.g}">${esc(p.t)}</span>`:esc(p.t)).join('');
-  return `<div class="sent"><button class="sp" ${key} aria-label="朗读整句">${label}</button><div class="tx"><div class="en">${en}</div><button class="zbtn" data-zh>👀 看中文</button><div class="zh">${cn}</div></div></div>`;
+  // 不给整句中文：点一个词，词下面出现这个词在这句话里的意思，全部点完连起来就是整句
+  const gl=GLM.get(s.en);let gp=0;
+  const cnOf=p=>{const k=p.t.toLowerCase();if(gl)for(let j=gp;j<gl.length;j++)if(gl[j][0]===k){gp=j+1;return gl[j][1];}
+    if(p.g>=0){const c=r.cnParts.filter(x=>x.g===p.g).map(x=>x.t).join('…').replace(/^[，。！？、“”：；\s]+|[，。！？、“”：；\s]+$/g,'');if(c)return c;}
+    return VOCK[k]||'';};
+  const en=r.enParts.map(p=>{if(!p.w)return esc(p.t);const c=cnOf(p);return `<span class="wd${c==='-'?' wx':''}" data-g="${p.g}" data-cn="${c==='-'?'（不用翻）':esc(c)}">${esc(p.t)}</span>`;}).join('');
+  return `<div class="sent"><button class="sp" ${key} aria-label="朗读整句">${label}</button><div class="tx"><div class="en">${en}</div></div></div>`;
 }
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),1800);}
 const starStr=n=>'⭐'.repeat(n)+'☆'.repeat(3-n);
@@ -253,14 +261,14 @@ function renderUnit(b,i,sub){
     <div class="note">👆 点卡片听发音，点 🐢 听慢速。</div>`;
   }else if(unitTab==='s'){
     const ss=u.s.map(P);
-    html+=`<div class="bar"><button class="btn" data-playall="s">▶️ 全部读一遍</button><button class="btn ghost" data-allzh>👀 全部显示中文</button></div>`+
-    ss.map((s,k)=>sentHTML(s,`data-sent="${k}"`,'🔊')).join('')+`<div class="note">👆 点「看中文」显示这一句的中文；点英文单词读这个词，显示中文后对应的中文会变黄色；点 🔊 听整句。</div>`;
+    html+=`<div class="bar"><button class="btn" data-playall="s">▶️ 全部读一遍</button></div>`+
+    ss.map((s,k)=>sentHTML(s,`data-sent="${k}"`,'🔊')).join('')+`<div class="note">👆 点英文单词读这个词，词下面会出现它在这句话里的中文，一个一个点完就能看懂整句；点 🔊 听整句。</div>`;
   }else if(unitTab==='p'){
     const ps=u.p.s.map(P);
     html+=`<h3 class="ptitle">${esc(u.p.t)}</h3><p class="psub">${esc(u.p.c)}</p>
-    <div class="bar"><button class="btn" data-playall="p">▶️ 读整篇</button><button class="btn ghost" data-stop>⏹ 停</button><button class="btn ghost" data-allzh>👀 全部显示中文</button></div>`+
+    <div class="bar"><button class="btn" data-playall="p">▶️ 读整篇</button><button class="btn ghost" data-stop>⏹ 停</button></div>`+
     ps.map((s,k)=>sentHTML(s,`data-psent="${k}"`,k+1)).join('')+
-    `<div class="note">📌 这篇短文是按本单元的单词和句型编写的练习短文，帮助孩子复习，不是课本原文。点句子前面的数字可以单独听这一句；点「看中文」显示这一句的中文；点某个英文单词，显示中文后对应的中文会变黄色。</div>`;
+    `<div class="note">📌 这篇短文是按本单元的单词和句型编写的练习短文，帮助孩子复习，不是课本原文。点句子前面的数字可以单独听这一句；点某个英文单词，词下面会出现它在这句话里的中文，一个一个点完就能看懂整句。</div>`;
   }else{
     html+=`<div class="modes">
       <button class="mode" data-mode="listen"><span class="em">👂</span><span><b>听音选图</b><span>听英语，选出对的图和意思</span></span></button>
@@ -382,8 +390,9 @@ document.addEventListener('click',e=>{
     const row=wd.closest('.sent');const g=wd.dataset.g;
     row.parentNode.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
     let words=[wd];
-    if(g!=='-1'){words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];row.querySelectorAll(`.cz[data-g="${g}"]`).forEach(x=>x.classList.add('hl'));}
+    if(g!=='-1')words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];
     words.forEach(x=>x.classList.add('hl'));
+    if(wd.dataset.cn)wd.classList.add('open');
     speak(words.map(x=>x.textContent).join(' '));
     return;
   }
@@ -394,8 +403,6 @@ document.addEventListener('click',e=>{
   if(d.acc){S.accent=d.acc;save();renderHome();speak('Hello!');return;}
   if(d.say){speak(d.say);return;}
   if(d.tab){unitTab=d.tab;render();return;}
-  if(d.zh!==undefined){t.closest('.sent').classList.add('open');return;}
-  if(d.allzh!==undefined){const all=document.querySelectorAll('.sent');const open=[...all].every(x=>x.classList.contains('open'));all.forEach(x=>x.classList.toggle('open',!open));t.textContent=open?'👀 全部显示中文':'🙈 全部遮住中文';return;}
   if(d.hidecn!==undefined){hideCn=!hideCn;$('#tabc').classList.toggle('hidecn',hideCn);t.textContent=hideCn?'👀 显示中文':'🙈 遮住中文';return;}
   if(d.stop!==undefined){stopSpeak();return;}
   const u=game&&game.u;
