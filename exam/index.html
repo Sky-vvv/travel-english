@@ -189,7 +189,7 @@ document.addEventListener('click',e=>{
     const row=wd.closest('.tsx');const g=wd.dataset.g;
     document.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
     let words=[wd];
-    if(g!=='-1')words=[...row.querySelectorAll(`.wd[data-g="${g}"]`)];
+    // 只亮点到的这一个词（以前会把同一组的词一起变黄）
     words.forEach(x=>x.classList.add('hl'));
     if(wd.dataset.cn)wd.classList.add('open');
     if(!row.dataset.ns)speak(words.map(x=>x.textContent).join(' '));
