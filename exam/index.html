@@ -77,6 +77,20 @@ header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .cz.hl{font-weight:700}
 .done{text-align:center;padding:20px 0}.done .big{font-size:60px}.done h2{font-size:34px;margin:6px 0}
 .pkey{display:none}
+body.kb{padding-bottom:55vh}
+/* 背单词 */
+.qtop{display:flex;align-items:center;gap:10px;margin:8px 0}
+.prog{flex:1;height:12px;background:#fff;border-radius:8px;overflow:hidden}.prog i{display:block;height:100%;background:var(--hd);transition:width .3s}
+.qbox{background:#fff;border-radius:22px;padding:22px 14px;text-align:center;box-shadow:var(--shadow);margin:10px 0}
+.qbox .em{font-size:64px}.qbox .q{font-size:26px;font-weight:800;margin-top:6px}.qbox .hint{color:var(--soft);font-size:14px;margin-top:4px}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{background:#fff;border-radius:18px;padding:14px 8px;box-shadow:var(--shadow);font-size:18px;font-weight:700;border:3px solid transparent;min-height:64px}
+.opt.right{border-color:var(--ok);background:#eafff2}.opt.wrong{border-color:var(--bad);background:#fff0f0}
+.slots{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;margin:14px 0}
+.slot{width:38px;height:46px;border-bottom:4px solid var(--line);font-size:26px;font-weight:800;display:grid;place-items:center}.slot.f{border-color:var(--hd)}
+.letters{display:flex;justify-content:center;gap:8px;flex-wrap:wrap}
+.letter{width:48px;height:52px;border-radius:14px;background:#fff;box-shadow:var(--shadow);font-size:24px;font-weight:800}.letter.used{visibility:hidden}
+.unit .sp{flex:none;background:#fff3e6;color:#e8590c;border-radius:12px;padding:8px 10px;font-weight:700;font-size:14px}
 .tfrom{font-size:12px;color:var(--soft);margin-bottom:2px}
 @media print{
   @page{size:A4;margin:12mm}
@@ -128,7 +142,8 @@ function speak(text){
 }
 </script>
 <script src="gloss.js?v=5"></script>
-<script src="exam.js?v=7"></script>
+<script src="exam.js?v=9"></script>
+<script src="spell.js?v=1"></script>
 <script>
 // ---------- 页面 ----------
 function header(title,back){$('#hdw').innerHTML=(back?`<button class="back" data-go="${back}" aria-label="返回">‹</button>`:'')+`<h1>${title}</h1>`;}
@@ -141,6 +156,7 @@ function render(){
   const p=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   const b=p[0]==='b'&&BOOKS.find(x=>x.id===p[1]);
   if(p[0]==='wrong'){header('📒 错题本','/');$('#app').innerHTML=renderReview();return;}
+  if(b&&p[2]!=null&&b.units[+p[2]]&&p[3]==='spell'){header(`第${CN_NUM[+p[2]]}单元 · 背单词`,`/b/${b.id}`);startSpell(b,+p[2]);return;}
   if(b&&p[2]!=null&&b.units[+p[2]]){
     const i=+p[2];
     header(`第${CN_NUM[i]}单元 · ${esc(b.units[i].t)}`,`/b/${b.id}`);
@@ -151,17 +167,21 @@ function render(){
     $('#app').innerHTML=`<div class="sec">${b.ed} · 选一个单元</div>`+b.units.map((u,i)=>`
       <button class="unit" data-go="/b/${b.id}/${i}"><span class="no" style="background:${b.color}">${CN_NUM[i]}</span>
       <span class="tt"><b>第${CN_NUM[i]}单元测试卷</b><span>Unit ${i+1} ${esc(u.t)} · ${u.c}</span></span>
-      <span class="score">${best(b,i)!=null?best(b,i)+' 分':''}</span></button>`).join('');
+      <span class="score">${best(b,i)!=null?best(b,i)+' 分':''}</span><span class="sp" data-go="/b/${b.id}/${i}/spell">🔤 背单词</span></button>`).join('');
     return;
   }
   header('📝 小学英语单元测试卷','');
   $('#app').innerHTML=`<div class="hero"><div class="big">📝</div><h2>单元测试卷</h2><p>手机上直接做题 · 也能打印成 A4 试卷</p></div>
   <button class="unit" data-go="/wrong" style="margin-bottom:14px"><span class="no" style="background:#ef6f6c">📒</span><span class="tt"><b>错题本</b><span>${wrongCount()?`有 ${wrongCount()} 道错题要再练`:'还没有错题，交卷后做错的题会收到这里'}</span></span><span class="score">›</span></button>
   <div class="grid">${BOOKS.map(b=>`<button class="book" style="background:${b.color}" data-go="/b/${b.id}"><span class="ic">${b.icon}</span><b>${b.grade}${b.term}</b><small>${b.ed}</small><small>${b.units.length} 套单元卷</small></button>`).join('')}</div>
-  <div class="note">每套卷 100 分，有听力和笔试：听音选图、听音选词、听音选句、补全单词、选出不同类、单项选择、情景交际、阅读判断。<br>做题时点 🔊 读整句，点英文单词读单词，单词下面会显示它的中文。交卷后做错的题会收进「错题本」。<br>打印的试卷最后一页有听力原文和答案，听力部分请家长照着读。</div>
+  <div class="note">每套卷 100 分，有听力和笔试：听音选图、听音选词、听音选句、看图写单词、选出不同类、单项选择、情景交际、阅读判断。<br>做题时点 🔊 读整句，点英文单词读单词，单词下面会显示它的中文。交卷后做错的题会收进「错题本」。<br>打印的试卷最后一页有听力原文和答案，听力部分请家长照着读。</div>
   <div class="foot">题目按人教版课本每个单元的单词和句型编写，不是课本或练习册的原题。<br>学单词、玩游戏请到：<a href="../kids/">小学英语乐园</a></div>`;
 }
 // 点单词：读这个词，单词变黄，旁边冒出它的中文
+// 平板/手机键盘弹出时，把正在填的横线滚到看得见的地方；按回车跳到下一个空
+document.addEventListener('focusin',e=>{if(!e.target.classList.contains('tin'))return;document.body.classList.add('kb');setTimeout(()=>e.target.scrollIntoView({block:'center',behavior:'smooth'}),350);});
+document.addEventListener('focusout',e=>{if(!e.target.classList.contains('tin'))return;setTimeout(()=>{if(!document.activeElement||!document.activeElement.classList.contains('tin'))document.body.classList.remove('kb');},300);});
+document.addEventListener('keydown',e=>{if(e.key!=='Enter'||!e.target.classList.contains('tin'))return;e.preventDefault();const all=[...document.querySelectorAll('.tin')];const n=all[all.indexOf(e.target)+1];if(n)n.focus();else e.target.blur();});
 // 点过的词，中文一直留在单词下面
 document.addEventListener('click',e=>{
   const wd=e.target.closest('.wd');
@@ -176,7 +196,7 @@ document.addEventListener('click',e=>{
     return;
   }
   document.querySelectorAll('.hl').forEach(x=>x.classList.remove('hl'));
-  const t=e.target.closest('[data-go]');if(t){go(t.dataset.go);}
+  const t=e.target.closest('[data-go]');if(t){e.stopPropagation();go(t.dataset.go);}
 });
 render();
 </script>

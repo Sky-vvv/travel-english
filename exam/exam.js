@@ -111,8 +111,8 @@ function makeTest(b,i,set){
    const items=pick(pool,5).map(w=>{
      const n=w.en.length>=6?2:1;const idx=rshuffle([...Array(w.en.length).keys()].filter(k=>w.en[k]!=='-'),r).slice(0,n);
      const pat=w.en.split('').map((c,k)=>idx.includes(k)?'_':c).join(' ');
-     return{type:'fill',q:`<span class="tem">${w.em}</span> ${esc(w.cn)}　<span class="pat">${esc(pat)}</span>`,ans:w.en};});
-   SEC.push({title:'看图和中文，补全单词（在横线上写出完整的单词）。',pts:2,items});}
+     return{type:'fill',q:`<span class="tem">${w.em}</span> ${esc(w.cn)}`,ans:w.en,pat};});
+   SEC.push({title:'看图和中文，写出单词（在横线上写出完整的单词）。',pts:2,items});}
   // 五、选出不同类的一项
   {const cats=rshuffle(Object.keys(CATS).filter(c=>catW(c).length>=3),r);
    const unitCats=rshuffle([...new Set(uw.flatMap(w=>catsOf(w.en)))],r);
@@ -214,7 +214,7 @@ function secHTML(k,s){
       const id=k+'-'+j;
       h+=`<div class="ti" data-ti="${id}">`;
       if(it.type==='fill'){
-        h+=`<div class="tq"><span class="tn">${j+1}.</span> ${it.q}　<input class="tin" data-tin="${id}" autocomplete="off" autocapitalize="off" spellcheck="false"></div>`;
+        h+=`<div class="tq"><span class="tn">${j+1}.</span> ${it.q.replace(/\s*<span class="pat">.*?<\/span>/,'')}　<input class="tin" data-tin="${id}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next"></div>`;
       }else if(it.type==='tf'){
         h+=`<div class="tq"><span class="br">( <b class="bf" id="bf-${id}"></b> )</span><span class="tn">${j+1}.</span><span class="tqt">${qHTML(it.q)}</span></div>
         <div class="topts no-print"><div class="topt" data-topt="${id}" data-v="T"><b>T</b> 对</div><div class="topt" data-topt="${id}" data-v="F"><b>F</b> 错</div></div>`;
@@ -234,7 +234,7 @@ function renderTest(b,i){
   const best=S.tests&&S.tests[b.id+'-'+i];
   const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
   const showcn=S.testShowCn;
-  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
+  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button><button class="btn ghost" data-go="/b/${b.id}/${i}/spell">🔤 背单词</button></div>
   <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
   <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
   <div class="paper ${showcn?'tshowcn':''}">
@@ -272,7 +272,7 @@ function renderReview(){
   if(!W.length){TEST=null;return `<div class="done"><div class="big">🎉</div><h2>错题本是空的！</h2><p>做测试卷交卷后，做错的题会自动收到这里。</p><div class="bar" style="justify-content:center"><button class="btn" data-go="/">返回首页</button></div></div>`;}
   // 同一单元、同一大题的错题放在一起（阅读判断只放一次短文）
   const secs=[];
-  for(const [key,o] of W){const g=o.b+'-'+o.i+'-'+o.title;let s=secs.find(x=>x.g===g);
+  for(const [key,o] of W){o.title=o.title.replace('补全单词','写出单词');const g=o.b+'-'+o.i+'-'+o.title;let s=secs.find(x=>x.g===g);
     if(!s){const b=BOOKS.find(x=>x.id===o.b);const u=b.units[o.i];s={g,keys:[],title:o.title,pts:2,listen:o.listen,passage:o.tf?u.p:null,items:[],from:`${b.grade}${b.term} · 第${CN_NUM[o.i]}单元`};secs.push(s);}
     s.keys.push(key);s.items.push(o.item);}
   TEST={review:true,secs,done:false,ans:{}};
