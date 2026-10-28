@@ -1,4 +1,4 @@
-// 背单词：和「小学英语乐园」的拼单词一样
+// 背单词（错题本里错题的单词）：和「小学英语乐园」的拼单词一样
 // 听单词、点字母拼出来 → 拼错一次就给答案 → 照着拼对一遍 → 遮住答案默写对 → 再选出中文意思，选对才到下一个
 let SP=null;
 function spShuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -10,16 +10,14 @@ function beep(ok){
     notes.forEach((f,k)=>{const o=actx.createOscillator(),g=actx.createGain();o.type='triangle';o.frequency.value=f;o.connect(g);g.connect(actx.destination);const t=actx.currentTime+k*.12;g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.18);o.start(t);o.stop(t+.2);});
   }catch(e){}
 }
-function startSpell(b,i){
-  const ws=b.units[i].w.map(W).filter(w=>/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=10);
-  const all=b.units.flatMap(u=>u.w.map(W));
-  SP={b,i,qs:spShuffle(ws),k:0,score:0,missed:false,all};
+function startSpell(ws,all,back){
+  SP={qs:spShuffle(ws),k:0,score:0,missed:false,all,back,ws};
   spRender();
 }
 function spRender(){
   const g=SP;if(g.k>=g.qs.length)return spDone();
   const q=g.qs[g.k];g.ans='';g.phase='';g.missed=false;g.locked=false;
-  $('#app').innerHTML=`<div class="qtop"><button class="btn ghost" data-go="/b/${g.b.id}">✕</button><div class="prog"><i style="width:${g.k/g.qs.length*100}%"></i></div><b>${g.k+1}/${g.qs.length}</b></div>
+  $('#app').innerHTML=`<div class="qtop"><button class="btn ghost" data-go="${g.back}">✕</button><div class="prog"><i style="width:${g.k/g.qs.length*100}%"></i></div><b>${g.k+1}/${g.qs.length}</b></div>
   <div class="qbox"><div class="em">${q.em}</div><div class="q">${esc(q.cn)}</div><div class="hint"></div><div id="reveal"></div><button class="btn" data-sphear style="margin-top:10px">🔊 再听一次</button></div>
   <div class="slots">${q.en.split('').map(()=>`<span class="slot"></span>`).join('')}</div>
   <div class="letters" id="letters"></div>
@@ -55,14 +53,14 @@ function spMeaning(){
 function spDone(){
   const g=SP,n=g.score,tot=g.qs.length;
   $('#app').innerHTML=`<div class="done"><div class="big">${n===tot?'🏆':'🎉'}</div><h2>背完啦！</h2><p>一共 ${tot} 个单词，一次就全对的有 ${n} 个。</p>
-  <div class="bar" style="justify-content:center"><button class="btn" data-spagain>🔁 再背一遍</button><button class="btn ghost" data-go="/b/${g.b.id}/${g.i}">做这个单元的测试卷</button></div></div>`;
+  <div class="bar" style="justify-content:center"><button class="btn" data-spagain>🔁 再背一遍</button><button class="btn ghost" data-go="${g.back}">返回错题本</button></div></div>`;
   if(n===tot){confetti();speak('Excellent!');}
 }
 document.addEventListener('click',e=>{
   if(!SP||!location.hash.endsWith('/spell'))return;
   const t=e.target.closest('button');if(!t)return;const d=t.dataset,g=SP;
   if(d.sphear!==undefined){speak(g.qs[g.k].en);return;}
-  if(d.spagain!==undefined){startSpell(g.b,g.i);return;}
+  if(d.spagain!==undefined){startSpell(g.ws,g.all,g.back);return;}
   if(d.spm!==undefined){
     if(g.locked)return;const q=g.qs[g.k];
     if(g.mopts[+d.spm]!==q){g.missed=true;beep(false);t.classList.add('wrong');t.disabled=true;toast('不对哦，再想想！');speak(q.en);return;}

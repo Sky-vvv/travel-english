@@ -142,8 +142,8 @@ function speak(text){
 }
 </script>
 <script src="gloss.js?v=5"></script>
-<script src="exam.js?v=9"></script>
-<script src="spell.js?v=1"></script>
+<script src="exam.js?v=10"></script>
+<script src="spell.js?v=2"></script>
 <script>
 // ---------- 页面 ----------
 function header(title,back){$('#hdw').innerHTML=(back?`<button class="back" data-go="${back}" aria-label="返回">‹</button>`:'')+`<h1>${title}</h1>`;}
@@ -155,8 +155,8 @@ function render(){
   TEST=null;window.scrollTo(0,0);
   const p=location.hash.replace(/^#\/?/,'').split('/').filter(Boolean);
   const b=p[0]==='b'&&BOOKS.find(x=>x.id===p[1]);
+  if(p[0]==='wrong'&&p[1]==='spell'){const r=wrongWords();if(!r.ws.length)return go('/wrong');header('🔤 背错题里的单词','/wrong');startSpell(r.ws,r.all,'/wrong');return;}
   if(p[0]==='wrong'){header('📒 错题本','/');$('#app').innerHTML=renderReview();return;}
-  if(b&&p[2]!=null&&b.units[+p[2]]&&p[3]==='spell'){header(`第${CN_NUM[+p[2]]}单元 · 背单词`,`/b/${b.id}`);startSpell(b,+p[2]);return;}
   if(b&&p[2]!=null&&b.units[+p[2]]){
     const i=+p[2];
     header(`第${CN_NUM[i]}单元 · ${esc(b.units[i].t)}`,`/b/${b.id}`);
@@ -167,7 +167,7 @@ function render(){
     $('#app').innerHTML=`<div class="sec">${b.ed} · 选一个单元</div>`+b.units.map((u,i)=>`
       <button class="unit" data-go="/b/${b.id}/${i}"><span class="no" style="background:${b.color}">${CN_NUM[i]}</span>
       <span class="tt"><b>第${CN_NUM[i]}单元测试卷</b><span>Unit ${i+1} ${esc(u.t)} · ${u.c}</span></span>
-      <span class="score">${best(b,i)!=null?best(b,i)+' 分':''}</span><span class="sp" data-go="/b/${b.id}/${i}/spell">🔤 背单词</span></button>`).join('');
+      <span class="score">${best(b,i)!=null?best(b,i)+' 分':''}</span></button>`).join('');
     return;
   }
   header('📝 小学英语单元测试卷','');

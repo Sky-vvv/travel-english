@@ -234,7 +234,7 @@ function renderTest(b,i){
   const best=S.tests&&S.tests[b.id+'-'+i];
   const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
   const showcn=S.testShowCn;
-  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button><button class="btn ghost" data-go="/b/${b.id}/${i}/spell">🔤 背单词</button></div>
+  let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
   <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
   <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
   <div class="paper ${showcn?'tshowcn':''}">
@@ -266,6 +266,22 @@ function noteWrong(T,s,k,j,it,ok){
   const o=S.wrongQ[key]||{b:T.b.id,i:T.i,title:s.title,listen:!!s.listen,tf:!!s.passage,item:it,n:0};
   o.n++;o.t=Date.now();S.wrongQ[key]=o;
 }
+// 错题里的单词：写单词题的答案、选词题的正确选项，句子题里出现的本单元单词
+function wrongWords(){
+  const out=new Map(),all=new Map();
+  for(const o of Object.values(S.wrongQ||{})){
+    const b=BOOKS.find(x=>x.id===o.b);if(!b)continue;const uw=b.units[o.i].w.map(W);
+    b.units.forEach(u=>u.w.map(W).forEach(w=>all.set(w.en.toLowerCase(),w)));
+    const it=o.item,add=en=>{const w=uw.find(x=>x.en.toLowerCase()===String(en).toLowerCase())||all.get(String(en).toLowerCase());if(w&&/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=10)out.set(w.en.toLowerCase(),w);};
+    const fromSent=en=>uw.forEach(w=>{if(hasWord(en,w.en))add(w.en);});
+    if(it.type==='fill')add(it.ans);
+    else if(it.type==='tf')fromSent(it.why?it.why.replace('短文里是：',''):it.q.s.en);
+    else{const c=it.opts[it.ans];const en=c.kind==='pic'?c.en:c.s.en;
+      if(it.src||!/\s/.test(en.trim()))add(en);else fromSent(en);
+      if(it.listen&&!/\s/.test(it.listen.trim()))add(it.listen);}
+  }
+  return{ws:[...out.values()],all:[...all.values()]};
+}
 function wrongCount(){return Object.keys(S.wrongQ||{}).length;}
 function renderReview(){
   const W=Object.entries(S.wrongQ||{}).sort((a,b)=>a[1].b.localeCompare(b[1].b)||a[1].i-b[1].i||a[1].t-b[1].t);
@@ -276,7 +292,8 @@ function renderReview(){
     if(!s){const b=BOOKS.find(x=>x.id===o.b);const u=b.units[o.i];s={g,keys:[],title:o.title,pts:2,listen:o.listen,passage:o.tf?u.p:null,items:[],from:`${b.grade}${b.term} · 第${CN_NUM[o.i]}单元`};secs.push(s);}
     s.keys.push(key);s.items.push(o.item);}
   TEST={review:true,secs,done:false,ans:{}};
-  return `<div class="note no-print">一共 <b>${W.length}</b> 道错题。做完点「交卷」，做对的题会移出错题本，做错的继续留着。</div>
+  const nw=wrongWords().ws.length;
+  return `${nw?`<div class="bar no-print" style="justify-content:center"><button class="btn" data-go="/wrong/spell">🔤 背错题里的单词（${nw} 个）</button></div>`:''}<div class="note no-print">一共 <b>${W.length}</b> 道错题。做完点「交卷」，做对的题会移出错题本，做错的继续留着。</div>
   <div class="paper">${secs.map((s,k)=>secHTML(k,s)).join('')}</div>
   <div class="bar no-print" style="justify-content:center;margin-top:16px"><button class="btn" data-tsubmit>✅ 交卷</button></div>
   <div id="tresult" class="no-print"></div>`;
