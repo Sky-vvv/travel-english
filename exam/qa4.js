@@ -1,0 +1,87 @@
+// 四年级问答（用于「听问题选答语」「选句子补全对话」）：每条 "问题|中文 # 正确答语|中文 # 不合适的答语|中文"
+const QA4={
+"4a-0":[
+"Can I help you, Mum?|妈妈，我能帮你吗？#Yes, please.|好的，谢谢。#It's in the kitchen.|它在厨房里。",
+"What can you do at home?|你在家能做什么？#I can sweep the floor.|我会扫地。#Yes, I can.|是的，我会。",
+"Can you make the bed?|你会铺床吗？#Yes, I can.|是的，我会。#I can cook.|我会做饭。",
+"Where is Mum?|妈妈在哪里？#She's in the kitchen.|她在厨房里。#She's busy.|她很忙。",
+"Is your dad busy?|你爸爸忙吗？#Yes, he is.|是的，他很忙。#He can cook.|他会做饭。",
+"Who waters the flowers?|谁给花浇水？#My brother.|我弟弟。#In the living room.|在客厅里。"],
+"4a-1":[
+"What's his name?|他叫什么名字？#His name is Zhang Peng.|他叫张鹏。#He is tall.|他很高。",
+"Is he tall?|他高吗？#Yes, he is.|是的，他很高。#He likes football.|他喜欢足球。",
+"Who's your best friend?|谁是你最好的朋友？#Amy is my best friend.|艾米是我最好的朋友。#Yes, she is.|是的，她是。",
+"Does she have long hair?|她留长头发吗？#Yes, she does.|是的，她留长头发。#She is quiet.|她很安静。",
+"Is she quiet?|她文静吗？#No, she isn't. She's funny.|不，她很有趣。#She has glasses.|她戴眼镜。",
+"What is your friend like?|你的朋友是什么样的？#He's kind and helpful.|他善良又乐于助人。#His name is Mike.|他叫迈克。"],
+"4a-2":[
+"Where do you live?|你住在哪里？#I live in a city.|我住在城市里。#Yes, I do.|是的，我是。",
+"Is it near your school?|它离你的学校近吗？#Yes, it is.|是的，很近。#I walk there.|我走路去。",
+"Do you live in a flat?|你住在公寓里吗？#Yes, I do.|是的，我住公寓。#It's quiet.|那里很安静。",
+"Where is the library?|图书馆在哪里？#It's near the park.|在公园附近。#It's big.|它很大。",
+"Is the hospital far?|医院远吗？#No, it isn't.|不，不远。#Yes, please.|好的，谢谢。",
+"Where do your grandparents live?|你的爷爷奶奶住在哪里？#They live in a village.|他们住在村子里。#They are kind.|他们很和蔼。"],
+"4a-3":[
+"What can we do for our community?|我们能为社区做什么？#We can pick up rubbish.|我们可以捡垃圾。#It's Sunday.|今天星期天。",
+"What does he do?|他是做什么的？#He's a police officer.|他是一名警察。#He's tall.|他很高。",
+"Who helps sick people?|谁帮助病人？#Doctors and nurses.|医生和护士。#In the park.|在公园里。",
+"Can you help the old people?|你能帮助老人吗？#Yes, I can.|是的，我能。#They are old.|他们年纪大了。",
+"Where do you plant trees?|你们在哪里种树？#In the park.|在公园里。#With the cleaners.|和清洁工一起。",
+"Is she a volunteer?|她是志愿者吗？#Yes, she is.|是的，她是。#She helps.|她帮忙。"],
+"4a-4":[
+"What's the weather like today?|今天天气怎么样？#It's sunny and warm.|天气晴朗又暖和。#I like summer.|我喜欢夏天。",
+"Is it rainy today?|今天下雨吗？#Yes, it is. Take your umbrella.|是的。带上你的伞。#It's my umbrella.|那是我的伞。",
+"Can I go outside?|我能出去吗？#Yes, you can.|是的，可以。#It's cold.|天很冷。",
+"Is it cold outside?|外面冷吗？#No, it's warm.|不，很暖和。#Let's fly a kite.|我们去放风筝吧。",
+"What do you wear on a cold day?|冷天你穿什么？#I wear my warm coat.|我穿暖和的外套。#It's windy.|刮风了。",
+"Is it windy?|刮风了吗？#Yes. Let's fly a kite!|是的。我们去放风筝吧！#It's my kite.|这是我的风筝。"],
+"4a-5":[
+"Which season do you like?|你喜欢哪个季节？#I like summer.|我喜欢夏天。#It's hot.|天很热。",
+"What do you wear in winter?|你冬天穿什么？#I wear a coat and gloves.|我穿外套，戴手套。#I can swim.|我会游泳。",
+"Is it hot in summer?|夏天热吗？#Yes, it is.|是的，很热。#I like summer.|我喜欢夏天。",
+"What can you do in spring?|春天你能做什么？#I can plant flowers.|我可以种花。#It's warm.|天很暖和。",
+"How many seasons are there in a year?|一年有几个季节？#Four.|四个。#In winter.|在冬天。",
+"Can I wear my T-shirt?|我能穿 T 恤吗？#No. Put on your sweater.|不行。穿上你的毛衣。#It's my T-shirt.|这是我的 T 恤。"],
+"4b-0":[
+"Are you ready for class?|你准备好上课了吗？#Yes, I am.|是的，准备好了。#Sorry, I'm late.|对不起，我迟到了。",
+"Can I run in the classroom?|我能在教室里跑吗？#No, you can't.|不，不可以。#Yes, I am.|是的，我是。",
+"What must we do in class?|上课我们必须做什么？#We must listen to the teacher.|我们必须听老师讲。#It's my desk.|这是我的课桌。",
+"Sorry, I'm late.|对不起，我迟到了。#Come in, please.|请进。#Raise your hand.|举手。",
+"Can I talk now?|我现在能说话吗？#Raise your hand first.|先举手。#It's quiet.|很安静。",
+"Who turns off the lights?|谁关灯？#I do.|我来。#After school.|放学后。"],
+"4b-1":[
+"Can I watch TV?|我能看电视吗？#No, you can't. Do your homework first.|不行。先做作业。#It's my TV.|这是我的电视。",
+"What time is bedtime?|几点睡觉？#Nine o'clock.|九点。#Good night.|晚安。",
+"Must I get up early?|我必须早起吗？#Yes, you must.|是的，你必须早起。#I can play games.|我可以玩游戏。",
+"What must you do before dinner?|晚饭前你必须做什么？#I must wash my hands.|我必须洗手。#I must go to bed.|我必须去睡觉。",
+"Can I play games now?|我现在能玩游戏吗？#Yes, for half an hour.|可以，玩半小时。#I clean my room.|我打扫房间。",
+"When do you clean your room?|你什么时候打扫房间？#On Saturday.|星期六。#In my room.|在我的房间。"],
+"4b-2":[
+"What time is it?|几点了？#It's seven o'clock.|七点了。#It's time.|是时候了。",
+"When do you get up?|你几点起床？#At six thirty.|六点半。#I get up.|我起床。",
+"What class do you have at nine?|九点你们上什么课？#We have maths.|我们上数学课。#At nine.|九点。",
+"Is it time for lunch?|该吃午饭了吗？#Yes, it is.|是的，该吃了。#I like lunch.|我喜欢午饭。",
+"Do you like PE?|你喜欢体育课吗？#Yes, I do. I can run fast.|喜欢。我能跑得很快。#It's PE.|是体育课。",
+"When is school over?|几点放学？#At four o'clock.|四点。#It's time to go home.|该回家了。"],
+"4b-3":[
+"How much is this skirt?|这条裙子多少钱？#It's fifty yuan.|五十元。#It's pretty.|它很漂亮。",
+"Can I try it on?|我能试穿一下吗？#Sure.|当然可以。#It's too expensive.|太贵了。",
+"How much are these shoes?|这双鞋多少钱？#They're ninety yuan.|九十元。#They're nice.|它们很好看。",
+"Can I help you?|需要帮忙吗？#Yes. I want a new dress.|是的。我想要一条新裙子。#It's cheap.|很便宜。",
+"Is the size OK?|尺码合适吗？#Yes, it's right.|是的，正合适。#It's sixty yuan.|六十元。",
+"Do you like this shirt?|你喜欢这件衬衫吗？#Yes. I'll take it.|喜欢。我买了。#How much is it?|多少钱？"],
+"4b-4":[
+"What are these?|这些是什么？#They're sheep.|它们是绵羊。#Yes, they are.|是的，它们是。",
+"Are those cows?|那些是奶牛吗？#Yes, they are.|是的，它们是。#They give us milk.|它们给我们牛奶。",
+"How many horses are there?|有几匹马？#There are three.|有三匹。#They're horses.|它们是马。",
+"What do hens give us?|母鸡给我们什么？#They give us eggs.|它们给我们鸡蛋。#They are hens.|它们是母鸡。",
+"Is your uncle a farmer?|你叔叔是农民吗？#Yes, he is.|是的，他是。#He has a farm.|他有一个农场。",
+"What does your uncle grow?|你叔叔种什么？#He grows vegetables.|他种蔬菜。#He is a farmer.|他是农民。"],
+"4b-5":[
+"Where does our food come from?|我们的食物从哪里来？#It comes from the farm.|它来自农场。#It's fresh.|它很新鲜。",
+"What would you like to eat?|你想吃什么？#I'd like some potatoes.|我想吃些土豆。#They're fresh.|它们很新鲜。",
+"Are these tomatoes fresh?|这些西红柿新鲜吗？#Yes, they are.|是的，很新鲜。#I like tomatoes.|我喜欢西红柿。",
+"Do you like carrots?|你喜欢胡萝卜吗？#Yes, I do.|是的，我喜欢。#They're carrots.|它们是胡萝卜。",
+"Who cooks dinner?|谁做晚饭？#My mum.|我妈妈。#In the kitchen.|在厨房里。",
+"How does the food get to the supermarket?|食物怎么到超市的？#By truck.|用卡车运过去。#It's yummy.|很好吃。"]
+};

@@ -34,7 +34,7 @@ const sameCat=(a,b)=>catsOf(a).some(c=>catsOf(b).includes(c));
 function rng(seed){let h=1779033703^seed.length;for(let i=0;i<seed.length;i++){h=Math.imul(h^seed.charCodeAt(i),3432918353);h=h<<13|h>>>19;}
   return()=>{h=Math.imul(h^h>>>16,2246822507);h=Math.imul(h^h>>>13,3266489909);h^=h>>>16;return(h>>>0)/4294967296;};}
 function rshuffle(a,r){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-const L='ABCD';
+const L='ABCDE';
 const CN_NUM='一二三四五六七八九十';
 const hasWord=(sent,w)=>new RegExp('(^|[^A-Za-z\'’-])'+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^A-Za-z\'’-])','i').test(sent);
 const isWord=w=>/^[A-Za-z][A-Za-z-]*$/.test(w);
@@ -48,9 +48,20 @@ for(const b of BOOKS)for(const u of b.units)for(const x of u.w){const w=W(x);con
 const reWord=w=>new RegExp('(^|[^A-Za-z\'’-])('+w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?=$|[^A-Za-z\'’-])','i');
 const wordS=(en,cn)=>({en,cn:cn||'',map:cn?en+'='+cn:''});
 
+// 期中卷 = 前一半单元，期末卷 = 全册；把这些单元的单词、句子合在一起出题
+function unitRange(b,i){const all=b.units.map((u,k)=>k);if(i==='mid')return all.slice(0,Math.ceil(all.length/2));if(i==='final')return all;return[+i];}
+function unitLabel(i){return i==='mid'?'期中':i==='final'?'期末':`第${CN_NUM[i]}单元`;}
+function virtUnit(b,i,r){
+  const ks=unitRange(b,i);if(ks.length===1){const u=b.units[ks[0]];return{...u,ps:[u.p],ks};}
+  const us=ks.map(k=>b.units[k]);const seen=new Set();
+  const w=us.flatMap(u=>u.w).filter(x=>{const k=x.split('|')[0].toLowerCase();if(seen.has(k))return false;seen.add(k);return true;});
+  const ps=rshuffle(us.map(u=>u.p),r);
+  return{t:i==='mid'?'Mid-term Test':'Final Test',c:i==='mid'?`期中（第一～${CN_NUM[ks.length-1]}单元）`:'期末（全册）',w,s:us.flatMap(u=>u.s),p:ps[0],ps,ks};
+}
 function makeTest(b,i,set){
+  if(b.grade==='四年级')return makeTest4(b,i,set);
   const r=rng(b.id+'-'+i+'-'+set);
-  const u=b.units[i];
+  const u=virtUnit(b,i,r);
   const uw=u.w.map(W);
   const bookW=b.units.flatMap(x=>x.w.map(W));
   const others=bookW.filter(w=>!uw.some(x=>x.en===w.en));
@@ -163,6 +174,106 @@ function makeTest(b,i,set){
   return SEC.filter(x=>x.items.length);
 }
 
+
+// ---------- 四年级：按学校单元练习卷的样子出题（十大题，听力 60 分 + 笔试 40 分） ----------
+function makeTest4(b,i,set){
+  const r=rng(b.id+'-'+i+'-'+set+'-v4');
+  const u=virtUnit(b,i,r);
+  const uw=u.w.map(W);
+  const pick=(arr,n)=>rshuffle(arr,r).slice(0,n);
+  const known=new Set(BOOKS.slice(0,BOOKS.indexOf(b)+1).flatMap(x=>x.units.flatMap(y=>y.w.map(z=>W(z).en.toLowerCase()))));
+  const catW=c=>CATW[c].filter(w=>known.has(w.toLowerCase()));
+  const P6=u.p;
+  const P9=u.ps.length>1?u.ps[1]:(typeof i==='number'||/^\d+$/.test(i))&&+i>0?b.units[+i-1].p:u.p;
+  const keyS=u.s.map(P),sents=[...keyS,...u.ps.flatMap(p=>p.s.map(P))];
+  const qa=u.ks.flatMap(k=>QA4[b.id+'-'+k]||[]).map(x=>{const[q,a,w]=x.split('#').map(y=>{const[en,cn]=y.split('|');return{en,cn};});return{q,a,w};});
+  const shortS=w=>rshuffle(sents.filter(s=>hasWord(s.en,w.en)&&s.en.split(' ').length<=10),r)[0];
+  const blankOf=(s,w)=>{const m=s.en.match(reWord(w));return m?{en:s.en.replace(reWord(w),'$1______'),word:m[2]}:null;};
+  function swapS(s,ant){
+    const words=s.en.match(/[A-Za-z']+/g)||[];
+    const inSent=ant?rshuffle(words.filter(w=>ANT[w.toLowerCase()]&&!hasWord(s.en,ANT[w.toLowerCase()])&&!new RegExp('metres? '+w,'i').test(s.en)),r).map(w=>({en:w}))
+      :rshuffle(uw.filter(w=>hasWord(s.en,w.en)&&catsOf(w.en).some(c=>!NOSWAP.includes(c))),r);
+    for(const w of inSent){
+      const pl=x=>/s$/i.test(x);
+      const rep=ant?ANT[w.en.toLowerCase()]:rshuffle(catW(catsOf(w.en).find(c=>!NOSWAP.includes(c))).filter(x=>x.toLowerCase()!==w.en.toLowerCase()&&!hasWord(s.en,x)&&pl(x)===pl(w.en)),r)[0];
+      if(!rep)continue;
+      const en=s.en.replace(reWord(w.en),(m,p1,p2)=>p1+(p2[0]===p2[0].toUpperCase()?rep[0].toUpperCase()+rep.slice(1):rep));
+      return{en,cn:'',map:''};
+    }
+    return null;
+  }
+  function tfItems(p){const ps=p.s.map(P);const items=[];let nFalse=0;
+    for(const s of rshuffle(ps.slice(1),r)){if(items.length>=5)break;
+      const sw=(nFalse<2||r()<0.4)?(swapS(s)||swapS(s,1)):null;
+      if(sw){nFalse++;items.push({type:'tf',q:{s:sw},ans:false,why:`短文里是：${s.en}`});}
+      else items.push({type:'tf',q:{s},ans:true});}
+    return items;}
+  const SEC=[];const used=new Set();
+  // 一、Listen and circle：听句子，圈出对的图
+  {const items=[];
+   for(const w of rshuffle(uw,r)){if(items.length>=5)break;
+     if(items.some(it=>it.opts.some(o=>o.em===w.em)))continue;
+     const s=shortS(w);const d=rshuffle(uw.filter(x=>x.em!==w.em&&!items.some(it=>it.opts.some(o=>o.em===x.em))&&!(s&&hasWord(s.en,x.en))),r)[0];if(!d)continue;
+     used.add(w.en);const opts=rshuffle([w,d],r);
+     items.push({type:'choice',listen:s?s.en:w.en,pic:1,opts:opts.map(o=>({kind:'pic',em:o.em,en:o.en})),ans:opts.indexOf(w)});}
+   SEC.push({title:'Listen and circle. 听录音，选出正确的图片。',pts:2,listen:1,items});}
+  // 二、Listen and number：听 5 句话，给图片标上 1～5
+  {let ws=rshuffle(uw.filter(w=>!used.has(w.en)),r);if(ws.length<5)ws=ws.concat(rshuffle(uw.filter(w=>used.has(w.en)),r));
+   const five=[];for(const w of ws){if(five.length>=5)break;if(five.some(x=>x.em===w.em))continue;five.push(w);}
+   const plays=five.map(w=>{const s=shortS(w);return s?s.en:w.en;});
+   const order=rshuffle(five.map((w,k)=>k),r);
+   const items=order.map(k=>({type:'choice',num:1,plays,q:{h:`<span class="tem big">${five[k].em}</span>`},opts:[1,2,3,4,5].map(n=>({kind:'n',n})),ans:k,why:`第 ${k+1} 句是：${plays[k]}`}));
+   SEC.push({title:'Listen and number. 听录音，用数字 1～5 给图片排序。',pts:2,listen:1,plays,items});}
+  // 三、Listen and judge：听句子，判断图片对不对
+  {const items=[];let nF=0;
+   for(const w of rshuffle(uw,r)){if(items.length>=5)break;
+     const s=shortS(w);const say=s?s.en:w.en;
+     const f=(nF<2||r()<0.35)&&items.length>=1;
+     const d=f?rshuffle(uw.filter(x=>x.em!==w.em&&!hasWord(say,x.en)),r)[0]:null;
+     if(d){nF++;items.push({type:'tf',listen:say,q:{h:`<span class="tem big">${d.em}</span>`},ans:false,why:`录音说的是：${say}`});}
+     else items.push({type:'tf',listen:say,q:{h:`<span class="tem big">${w.em}</span>`},ans:true});}
+   SEC.push({title:'Listen and judge. 听录音，判断图片与录音内容是(T)否(F)相符。',pts:2,listen:1,items});}
+  // 四、Listen and choose：听问题，选出合适的答语
+  {const items=pick(qa,5).map(x=>{const opts=rshuffle([x.a,x.w],r);
+     return{type:'choice',listen:x.q.en,col:1,opts:opts.map(o=>({kind:'s',s:{en:o.en,cn:'',map:''},ns:1})),ans:opts.indexOf(x.a),why:`问题是：${x.q.en}`};});
+   SEC.push({title:'Listen and choose. 听问题，选出合适的答语。',pts:2,listen:1,items});}
+  // 五、Listen, circle and write：听句子，选出或写出所缺的单词
+  {const items=[];const cand=[...rshuffle(sents.filter(s=>s.en.split(' ').length<=10),r),...rshuffle(sents.filter(s=>s.en.split(' ').length>10),r)];
+   for(const s of cand){if(items.length>=5)break;
+     const ok=x=>hasWord(s.en,x.en)&&!items.some(it=>it.w===x.en);const w=rshuffle(uw.filter(x=>isWord(x.en)&&ok(x)),r)[0]||rshuffle(uw.filter(ok),r)[0];if(!w)continue;
+     if(items.some(it=>it.listen===s.en))continue;
+     const bl=blankOf(s,w.en);if(!bl)continue;
+     if(items.length<2){const d=rshuffle(uw.filter(x=>isWord(x.en)&&x.en!==w.en&&!hasWord(s.en,x.en)),r)[0];if(!d)continue;
+       const opts=rshuffle([w,d],r);const fix=x=>bl.word[0]===bl.word[0].toUpperCase()?x.en[0].toUpperCase()+x.en.slice(1):x.en;
+       items.push({type:'choice',w:w.en,listen:s.en,q:{s:{en:bl.en,cn:'',map:''}},opts:opts.map(o=>({kind:'s',s:wordS(fix(o)),ns:1})),ans:opts.indexOf(w)});}
+     else items.push({type:'fill',w:w.en,listen:s.en,q:tS({en:bl.en,cn:'',map:''},{nosp:1}),ans:bl.word});}
+   SEC.push({title:'Listen, circle and write. 听录音，选出或写出句子中所缺的单词。',pts:2,listen:1,items});}
+  // 六、Listen and judge：听短文，判断句子正误
+  SEC.push({title:'Listen and judge. 听短文，判断下列句子与短文内容是(T)否(F)相符。',pts:2,listen:1,lp:P6,items:tfItems(P6)});
+  // 七、Read and fill：从方框里选词填空
+  {const items=[];const phr=[...uw].sort((a,b)=>b.en.length-a.en.length);
+   for(const s of [...rshuffle(keyS,r),...rshuffle(P9.s.map(P),r),...rshuffle(sents,r)]){if(items.length>=5)break;
+     const w=phr.find(x=>hasWord(s.en,x.en)&&!items.some(it=>it.ans.toLowerCase()===x.en.toLowerCase()));if(!w)continue;
+     const bl=blankOf(s,w.en);if(!bl)continue;items.push({type:'fill',q:tS({en:bl.en,cn:'',map:''},{nosp:1}),ans:bl.word});}
+   const box=rshuffle(items.map(it=>it.ans.toLowerCase()),r);items.forEach(it=>it.box=box);
+   SEC.push({title:'Read and fill. 从方框中选择合适的词，填在横线上。',pts:2,items});}
+  // 八、Read and choose：根据中文意思，从方框中选出合适的句子
+  {const five=pick(keyS.filter(s=>s.en.split(' ').length>=2),5);
+   const box=rshuffle(five,r).map(s=>({kind:'s',s:{en:s.en,cn:'',map:''}}));
+   const items=five.map(s=>({type:'choice',boxed:1,q:{h:`想用英语说「${esc(s.cn)}」：`},opts:box,ans:box.findIndex(o=>o.s.en===s.en)}));
+   SEC.push({title:'Read and choose. 根据中文意思，从方框中选出合适的句子，把字母填在括号里。',pts:2,items});}
+  // 九、Read and judge：读短文，判断正误
+  SEC.push({title:'Read and judge. 阅读短文，判断下列句子是(T)否(F)正确。',pts:2,passage:P9,items:tfItems(P9)});
+  // 十、Read and write：看中文提示，写出所缺的单词
+  {const items=[];
+   for(const s of [...P6.s.map(P),...rshuffle(keyS,r)]){if(items.length>=5)break;
+     const w=rshuffle(uw.filter(x=>hasWord(s.en,x.en)&&!items.some(it=>it.ans.toLowerCase()===x.en.toLowerCase())),r)[0];if(!w)continue;
+     const bl=blankOf(s,w.en);if(!bl)continue;
+     items.push({type:'fill',q:tS({en:bl.en,cn:'',map:''},{nosp:1})+` <span class="thint">（${esc(w.cn.split('；')[0])}）</span>`,ans:bl.word});}
+   SEC.push({title:'Read and write. 根据括号里的中文提示，写出所缺的单词。',pts:2,items});}
+  return SEC.filter(x=>x.items.length);
+}
+
 // ---------- 渲染 ----------
 // 一句英文：点 🔊 读整句，点单词读单词，下面对应的中文变色
 // 句子不给整句中文：点哪个词，就只显示那个词的中文
@@ -200,6 +311,7 @@ function tS(s,o={}){
   return `<span class="tsx" ${o.ns?'data-ns="1"':''}>${o.ns||o.nosp?'':`<button class="tsp no-print" data-tsay="${esc(s.en)}" aria-label="读整句">🔊</button>`}<span class="ten">${en}</span>${o.cnAlways&&s.cn?`<span class="tcn">${esc(s.cn)}</span>`:''}</span>`;
 }
 function optHTML(o){
+  if(o.kind==='n')return '';
   if(o.kind==='pic')return `<span class="tem">${o.em}</span>`;
   return tS(o.s,{ns:o.ns,nocn:o.nocn,nosp:!o.s.cn&&!o.ns&&o.s.en.split(' ').length===1&&false});
 }
@@ -209,18 +321,25 @@ function testSet(b,i){return (S.testSet&&S.testSet[b.id+'-'+i])||1;}
 function secHTML(k,s){
     let h=`<div class="tsec">${s.from?`<div class="tfrom">${esc(s.from)}</div>`:''}<h4>${s.from?'':CN_NUM[k]+'、'}${s.title}${s.from?'':`<small>（共 ${s.items.length} 小题，每小题 ${s.pts} 分，共 ${s.items.length*s.pts} 分）</small>`}</h4>`;
     if(s.listen&&!s.from)h+=`<div class="tlh no-print">点 🔊 听录音。打印的试卷请家长照着最后一页的“听力原文”读给孩子听。</div>`;
+    const plays=s.plays||(s.items[0]&&s.items[0].plays);
+    if(plays)h+=`<div class="tplays no-print">${plays.map((x,q)=>`<button class="btn ghost" data-tsay="${esc(x)}">🔊 第 ${q+1} 句</button>`).join('')}</div>`;
+    if(s.lp)h+=`<div class="tplays no-print"><button class="btn" data-tsay="${esc(s.lp.s.map(x=>P(x).en).join(' '))}">🔊 听短文</button><span class="tlh">（短文不给看，听两遍再判断）</span></div>`;
+    const box=s.items[0]&&s.items[0].box;
+    if(box)h+=`<div class="tbox">${box.map(w=>`<span>${esc(w)}</span>`).join('')}</div>`;
+    const bx=s.items.find(it=>it.boxed);
+    if(bx)h+=`<div class="tbox col">${bx.opts.map((o,q)=>`<div><b>${L[q]}.</b> ${optHTML(o)}</div>`).join('')}</div>`;
     if(s.passage)h+=`<div class="tpass"><div class="tpt">${esc(s.passage.t)}</div>${s.passage.s.map(x=>`<div class="tpl">${tS(P(x))}</div>`).join('')}</div>`;
     s.items.forEach((it,j)=>{
       const id=k+'-'+j;
       h+=`<div class="ti" data-ti="${id}">`;
       if(it.type==='fill'){
-        h+=`<div class="tq"><span class="tn">${j+1}.</span> ${it.q.replace(/\s*<span class="pat">.*?<\/span>/,'')}　<input class="tin" data-tin="${id}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next"></div>`;
+        h+=`<div class="tq"><span class="tn">${j+1}.</span>${it.listen?`<button class="tsp big no-print" data-tsay="${esc(it.listen)}">🔊</button>`:''} ${it.q.replace(/\s*<span class="pat">.*?<\/span>/,'')}　<input class="tin" data-tin="${id}" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" enterkeyhint="next"></div>`;
       }else if(it.type==='tf'){
-        h+=`<div class="tq"><span class="br">( <b class="bf" id="bf-${id}"></b> )</span><span class="tn">${j+1}.</span><span class="tqt">${qHTML(it.q)}</span></div>
+        h+=`<div class="tq"><span class="br">( <b class="bf" id="bf-${id}"></b> )</span><span class="tn">${j+1}.</span>${it.listen?`<button class="tsp big no-print" data-tsay="${esc(it.listen)}">🔊</button>`:''}<span class="tqt">${qHTML(it.q)}</span></div>
         <div class="topts no-print"><div class="topt" data-topt="${id}" data-v="T"><b>T</b> 对</div><div class="topt" data-topt="${id}" data-v="F"><b>F</b> 错</div></div>`;
       }else{
         h+=`<div class="tq"><span class="br">( <b class="bf" id="bf-${id}"></b> )</span><span class="tn">${j+1}.</span>${it.listen?`<button class="tsp big no-print" data-tsay="${esc(it.listen)}">🔊</button>`:''}<span class="tqt">${qHTML(it.q)}</span></div>
-        <div class="topts ${it.pic?'pic':''} ${it.col?'col':''}">${it.opts.map((o,q)=>`<div class="topt" data-topt="${id}" data-v="${q}"><b class="tl">${L[q]}.</b> ${optHTML(o)}</div>`).join('')}</div>`;
+        <div class="topts ${it.pic?'pic':''} ${it.col?'col':''} ${it.boxed||it.num?'lab no-print':''}">${it.opts.map((o,q)=>`<div class="topt" data-topt="${id}" data-v="${q}" data-lab="${labOf(it,q)}"><b class="tl">${labOf(it,q)}${it.boxed||it.num?'':'.'}</b> ${it.boxed?'':optHTML(o)}</div>`).join('')}</div>`;
       }
       h+=`<div class="tfb" id="fb-${id}"></div></div>`;
     });
@@ -230,30 +349,35 @@ function renderTest(b,i){
   const set=testSet(b,i);
   const secs=makeTest(b,i,set);
   TEST={b,i,set,secs,done:false,ans:{}};
-  const u=b.units[i];
+  const u=virtUnit(b,i,rng(b.id+'-'+i+'-'+set));
+  const lab=unitLabel(i),nm=typeof i==='number'?`${lab}测试卷`:`${lab}测试卷`;
   const best=S.tests&&S.tests[b.id+'-'+i];
   const total=secs.reduce((s,x)=>s+x.pts*x.items.length,0);
   const showcn=S.testShowCn;
   let html=`<div class="bar no-print"><button class="btn" data-tprint>🖨️ 打印试卷</button><button class="btn ghost" data-tnew>🔄 换一套</button></div>
   <label class="no-print tkeyopt"><input type="checkbox" id="tkey" ${S.printKey!==false?'checked':''}> 打印时附上听力原文和答案（最后一页）</label>
-  <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这个单元的最好成绩：<b>${best} 分</b>`:''}</div>
+  <div class="note no-print">👆 点 🔊 读整句，点英文单词读单词，下面对应的中文会变黄色。${best!=null?`<br>这套卷的最好成绩：<b>${best} 分</b>`:''}</div>
   <div class="paper ${showcn?'tshowcn':''}">
-  <div class="phead"><div class="pt">${b.grade}${b.term} · 第${CN_NUM[i]}单元测试卷（第 ${set} 套）</div>
-  <div class="ps">Unit ${i+1} ${esc(u.t)} · ${u.c} · 满分 ${total} 分</div>
+  <div class="phead"><div class="pt">${b.grade}${b.term} · ${nm}（第 ${set} 套）</div>
+  <div class="ps">${typeof i==='number'?`Unit ${i+1} `:''}${esc(u.t)} · ${u.c} · 满分 ${total} 分</div>
   <div class="pinfo">姓名 ________　　班级 ________　　得分 ________</div></div>`;
-  html+=`<div class="tpart">第一部分　听力（共 ${secs.slice(0,3).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;
-  secs.forEach((s,k)=>{if(k===3)html+=`<div class="tpart">第二部分　笔试（共 ${secs.slice(3).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;html+=secHTML(k,s);});
+  const nL=secs.filter(x=>x.listen).length;
+  html+=`<div class="tpart">第一部分　听力（共 ${secs.slice(0,nL).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;
+  secs.forEach((s,k)=>{if(k===nL)html+=`<div class="tpart">第二部分　笔试（共 ${secs.slice(nL).reduce((s,x)=>s+x.pts*x.items.length,0)} 分）</div>`;html+=secHTML(k,s);});
   html+=`</div>
   <div class="bar no-print" style="justify-content:center;margin-top:16px"><button class="btn" data-tsubmit>✅ 交卷</button></div>
   <div id="tresult" class="no-print"></div>
   <div class="pkey">${keyHTML(secs,b,i,set)}</div>`;
   return html;
 }
-function letterOf(it){return it.type==='tf'?(it.ans?'T':'F'):it.type==='fill'?it.ans:L[it.ans];}
-function optText(o){return o.kind==='pic'?o.en:o.s.en;}
+function labOf(it,q){const o=it.opts[q];return o&&o.kind==='n'?String(o.n):L[q];}
+function letterOf(it){return it.type==='tf'?(it.ans?'T':'F'):it.type==='fill'?it.ans:labOf(it,it.ans);}
+function optText(o){return o.kind==='pic'?o.en:o.kind==='n'?'':o.s.en;}
 function keyHTML(secs,b,i,set){
-  let h=`<div class="pt">${b.grade}${b.term} · 第${CN_NUM[i]}单元测试卷（第 ${set} 套）· 听力原文和答案</div><h4>听力原文（请家长读两遍）</h4>`;
-  secs.slice(0,3).forEach((s,k)=>{h+=`<p><b>${CN_NUM[k]}、</b>${s.items.map((it,j)=>`${j+1}. ${esc(it.listen)}`).join('　')}</p>`;});
+  let h=`<div class="pt">${b.grade}${b.term} · ${unitLabel(i)}测试卷（第 ${set} 套）· 听力原文和答案</div><h4>听力原文（请家长读两遍）</h4>`;
+  secs.forEach((s,k)=>{if(!s.listen)return;
+    const lines=s.plays?s.plays:s.lp?[s.lp.s.map(x=>P(x).en).join(' ')]:s.items.map(it=>it.listen);
+    h+=`<p><b>${CN_NUM[k]}、</b>${lines.map((x,j)=>s.lp?esc(x):`${j+1}. ${esc(x)}`).join('　')}</p>`;});
   h+='<h4>参考答案</h4>';
   secs.forEach((s,k)=>{h+=`<p><b>${CN_NUM[k]}、</b>${s.items.map((it,j)=>`${j+1}. ${esc(letterOf(it))}`).join('　')}</p>`;});
   return h;
@@ -263,19 +387,20 @@ function noteWrong(T,s,k,j,it,ok){
   S.wrongQ=S.wrongQ||{};
   const key=T.review?s.keys[j]:`${T.b.id}-${T.i}-${T.set}-${k}-${j}`;
   if(ok){delete S.wrongQ[key];return;}
-  const o=S.wrongQ[key]||{b:T.b.id,i:T.i,title:s.title,listen:!!s.listen,tf:!!s.passage,item:it,n:0};
+  const o=S.wrongQ[key]||{b:T.b.id,i:T.i,set:T.set,title:s.title,listen:!!s.listen,tf:!!s.passage,pass:s.passage||null,lp:s.lp||null,item:it,n:0};
   o.n++;o.t=Date.now();S.wrongQ[key]=o;
 }
 // 错题里的单词：写单词题的答案、选词题的正确选项，句子题里出现的本单元单词
 function wrongWords(){
   const out=new Map(),all=new Map();
   for(const o of Object.values(S.wrongQ||{})){
-    const b=BOOKS.find(x=>x.id===o.b);if(!b)continue;const uw=b.units[o.i].w.map(W);
+    const b=BOOKS.find(x=>x.id===o.b);if(!b)continue;const uw=unitRange(b,o.i).flatMap(k=>b.units[k].w.map(W));
     b.units.forEach(u=>u.w.map(W).forEach(w=>all.set(w.en.toLowerCase(),w)));
     const it=o.item,add=en=>{const w=uw.find(x=>x.en.toLowerCase()===String(en).toLowerCase())||all.get(String(en).toLowerCase());if(w&&/^[a-zA-Z]+$/.test(w.en)&&w.en.length<=10)out.set(w.en.toLowerCase(),w);};
     const fromSent=en=>uw.forEach(w=>{if(hasWord(en,w.en))add(w.en);});
     if(it.type==='fill')add(it.ans);
-    else if(it.type==='tf')fromSent(it.why?it.why.replace('短文里是：',''):it.q.s.en);
+    else if(it.type==='tf')fromSent(it.why?it.why.replace(/^.*?：/,''):it.listen||it.q.s.en);
+    else if(it.plays)fromSent(it.plays[it.ans]);
     else{const c=it.opts[it.ans];const en=c.kind==='pic'?c.en:c.s.en;
       if(it.src||!/\s/.test(en.trim()))add(en);else fromSent(en);
       if(it.listen&&!/\s/.test(it.listen.trim()))add(it.listen);}
@@ -284,12 +409,12 @@ function wrongWords(){
 }
 function wrongCount(){return Object.keys(S.wrongQ||{}).length;}
 function renderReview(){
-  const W=Object.entries(S.wrongQ||{}).sort((a,b)=>a[1].b.localeCompare(b[1].b)||a[1].i-b[1].i||a[1].t-b[1].t);
+  const W=Object.entries(S.wrongQ||{}).sort((a,b)=>a[1].b.localeCompare(b[1].b)||String(a[1].i).localeCompare(String(b[1].i))||a[1].t-b[1].t);
   if(!W.length){TEST=null;return `<div class="done"><div class="big">🎉</div><h2>错题本是空的！</h2><p>做测试卷交卷后，做错的题会自动收到这里。</p><div class="bar" style="justify-content:center"><button class="btn" data-go="/">返回首页</button></div></div>`;}
   // 同一单元、同一大题的错题放在一起（阅读判断只放一次短文）
   const secs=[];
-  for(const [key,o] of W){o.title=o.title.replace('补全单词','写出单词');const g=o.b+'-'+o.i+'-'+o.title;let s=secs.find(x=>x.g===g);
-    if(!s){const b=BOOKS.find(x=>x.id===o.b);const u=b.units[o.i];s={g,keys:[],title:o.title,pts:2,listen:o.listen,passage:o.tf?u.p:null,items:[],from:`${b.grade}${b.term} · 第${CN_NUM[o.i]}单元`};secs.push(s);}
+  for(const [key,o] of W){o.title=o.title.replace('补全单词','写出单词');const many=o.lp||o.item.plays||o.pass;const g=o.b+'-'+o.i+'-'+o.title+(many?'-'+o.set:'');let s=secs.find(x=>x.g===g);
+    if(!s){const b=BOOKS.find(x=>x.id===o.b);s={g,keys:[],title:o.title,pts:2,listen:o.listen,lp:o.lp,passage:o.tf?(o.pass||b.units[o.i].p):null,items:[],from:`${b.grade}${b.term} · ${unitLabel(o.i)}`};secs.push(s);}
     s.keys.push(key);s.items.push(o.item);}
   TEST={review:true,secs,done:false,ans:{}};
   const nw=wrongWords().ws.length;
@@ -312,7 +437,7 @@ function submitTest(){
   T.secs.forEach((s,k)=>s.items.forEach((it,j)=>{
     const id=k+'-'+j;const el=document.querySelector(`[data-ti="${id}"]`);const fb=$('#fb-'+id);
     let got=T.ans[id],ok;
-    if(it.type==='fill'){got=(document.querySelector(`[data-tin="${id}"]`).value||'').trim();ok=got.toLowerCase()===it.ans.toLowerCase();}
+    if(it.type==='fill'){got=(document.querySelector(`[data-tin="${id}"]`).value||'').trim();const nz=x=>x.toLowerCase().replace(/[’`]/g,"'").replace(/\s+/g,' ').replace(/[.!?,]+$/,'');ok=nz(got)===nz(it.ans);}
     else if(it.type==='tf')ok=got===(it.ans?'T':'F');
     else ok=got!==undefined&&+got===it.ans;
     if(got===undefined||got==='')blank++;
@@ -344,7 +469,7 @@ document.addEventListener('click',e=>{
     if(TEST.done)return;const d=op.dataset;
     TEST.ans[d.topt]=d.v;
     op.parentNode.querySelectorAll('.topt').forEach(x=>x.classList.toggle('on',x===op));
-    const bf=$('#bf-'+d.topt);if(bf)bf.textContent=d.v==='T'||d.v==='F'?d.v:L[+d.v];
+    const bf=$('#bf-'+d.topt);if(bf)bf.textContent=d.lab||d.v;
     return;
   }
   const t=e.target.closest('button');if(!t)return;const d=t.dataset;
